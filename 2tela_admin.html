@@ -1,12 +1,10 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tela 2 admin</title>
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <title>tela 2 funcionario</title>
+     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <style>
         @import url('https://fonts.googleapis.com/css2?family=Rationale&display=swap');
 
@@ -23,13 +21,13 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(to bottom, #ffffff 70%, #4682B4 100%);
+            background: linear-gradient(to bottom, #ffffff 70%, #4682b4 100%);
             background-attachment: fixed;
         }
 
-        .container-admin {
+        .container-admin{
             width: 420px;
-            background-color: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 10px;
             padding: 30px 40px;
@@ -151,29 +149,28 @@
         text-align: center;
         color: #86b4c4;
     }
+
     </style>
 </head>
 <body>
-       <div>
+      <div>
         
         <img src="logo.PNG" alt="Logo do Sistema" class="logo">
      <h1 class= "nome">Valis<span class="cor-diferente">to</span>que</h1>
     </div>
     <main class="container-admin">
-        <form method="POST" action="cadastra.php">
+        <form action="">
 
     <a href="javascript:history.back()" class="voltar">&larr; Voltar para seleção</a>
-            <h1>Acesso de Administrador</h1>
+            <h1>Acesso do Administrador</h1>
             
             <div class="login-box">
-                <label for="email">Email:</label><br>
-                <input type="email" id="email"  nome="email"placeholder="Email" required>
+                <input type="email" placeholder="Email" required>
                 <i class='bx bxs-user'></i>
             </div>
             
             <div class="login-box">
-                <label for="confirmaSenha">Senha:</label><br>
-                <input type="password" id="confirmaSenha" nome="confirmaSenha" placeholder="Senha" required>
+                <input type="password" placeholder="Senha" required>
                 <i class='bx bxs-lock-alt'></i>
             </div>
 
@@ -183,7 +180,6 @@
             </div>
 
             <button type="submit" class="botao">Confirmar</button>
-            <br>
          <p class="baixo">
               &copy; 2026 Valistoque. Todos os direitos reservados.
             </p>

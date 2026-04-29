@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valistoque - Controle de Estoque</title>
+    <style>
+        /* Variáveis */
+        :root {
+            --background: 210 20% 98%;    
+            --foreground: 210 40% 10%;   
+            --primary: 160 84% 35%;      
+            --primary-foreground: 0 0% 100%;
+            --border: 210 20% 90%;       
+            --radius: 0.7rem;
+
+            --fluid-1: 170 90% 80%;      
+            --fluid-2: 220 80% 85%;
+            --fluid-3: 280 60% 88%;
+            --fluid-4: 160 80% 82%;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;             
+            flex-direction: column;
+            align-items: center;             
+            padding: 30px 0; 
+        }
+
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 100%; 
+            padding: 0 5%;  
+            margin-bottom: 60px;
+            justify-content: flex-start;
+        }
+
+        .logo-container img {
+            height: 100px;
+            width: auto;
+        }
+
+        .logo-container .nome {
+            font-family: Georgia, serif;
+            font-weight: bold;
+            font-size: 30px;
+            color: rgb(40, 40, 180); 
+            margin: 0;
+            letter-spacing: -1px;
+        }
+
+        .cor-diferente {
+            color: rgb(34, 160, 34); 
+        }
+
+        /* BACKGROUNDcolor ANIMADO */
+        .fluid-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            filter: blur(100px);
+            opacity: 0.7;
+        }
+
+        .fluid-item {
+            position: absolute;
+            width: 45vw; height: 45vw;
+            border-radius: 50%;
+        }
+
+        .blob-1 { background: hsl(var(--fluid-1)); top: -15%; left: 5%; animation: fluid-move-1 20s infinite alternate; }
+        .blob-2 { background: hsl(var(--fluid-2)); bottom: -10%; right: 5%; animation: fluid-move-2 25s infinite alternate; }
+        .blob-3 { background: hsl(var(--fluid-3)); top: 30%; right: -10%; opacity: 0.5; }
+        .blob-4 { background: hsl(var(--fluid-4)); bottom: 10%; left: -10%; opacity: 0.5; }
+
+        
+        .content {
+            text-align: center;
+            max-width: 850px;
+            margin-bottom: 70px;
+            padding: 0 20px;
+            z-index: 1;
+        }
+
+        .content h1 { 
+            font-size: 3.5rem; 
+            margin-bottom: 1.5rem; 
+            line-height: 1.1; 
+            font-weight: 800;
+            color: #111;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #16a34a, #2563eb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .content p { 
+            font-size: 1.25rem; 
+            margin-bottom: 2.5rem; 
+            color: #444; 
+            line-height: 1.6; 
+        }
+
+        .card-buttons { display: flex; gap: 15px; justify-content: center; }
+
+        .btn-primary, .btn-primary2 {
+            padding: 1rem 2.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.05rem;
+        }
+
+        .btn-primary { background-color: hsl(var(--primary)); color: white; border: none; }
+        .btn-primary2 { background-color: transparent; color: hsl(var(--primary)); border: 2px solid hsl(var(--primary)); }
+        
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(22, 163, 74, 0.2); }
+        .btn-primary2:hover { background: rgba(22, 163, 74, 0.05); transform: translateY(-3px); }
+
+        /* FAIXA ANIMADA lembrar */
+        .container-faixa {
+            width: 100%;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 25px 0;
+            margin-bottom: 100px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            margin-top: 70px;
+        }
+
+        .frases {
+            display: flex;
+            width: max-content;
+            animation: faixaAnimada 40s linear infinite;
+        }
+
+        .frases p {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4f46e5; 
+            padding-right: 80px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @keyframes faixaAnimada {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .positivo {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 1000px;
+            width: 90%;
+            margin-bottom: 120px;
+            z-index: 1;
+        }
+
+        .box-item {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 35px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .box-item:hover {
+            border-color: #16a34a;
+            background-color: #ffffff;
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .icon-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 55px;
+            height: 55px;
+            border: 2px solid #16a34a;
+            border-radius: 14px;
+            margin-bottom: 25px;
+            color: #16a34a;
+            background: rgba(22, 163, 74, 0.1);
+            font-size: 1.5rem;
+        }
+
+        .box-item h2 { font-size: 1.5rem; margin-bottom: 15px; color: #111; }
+        .box-item p { font-size: 1.05rem; color: #555; text-align: left; line-height: 1.6; }
+
+        
+
+        
+        @keyframes fluid-move-1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(80px, -50px); } }
+        @keyframes fluid-move-2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-80px, 50px); } }
+    </style>
+</head>
+<body>
+    <!-- LOGO -->
+    <div class="logo-container">
+        <img src="logo.png" alt="Valistoque Logo" class="logo">
+        <h1 class="nome">Valis<span class="cor-diferente">to</span>que</h1>
+    </div>
+
+    <!-- BACKGROUND ANIMADO -->
+    <div class="fluid-container">
+        <div class="fluid-item blob-1"></div>
+        <div class="fluid-item blob-2"></div>
+        <div class="fluid-item blob-3"></div>
+        <div class="fluid-item blob-4"></div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="content">
+        <h1>Seu estoque sob <span class="gradient-text">controle total</span></h1>
+        <p>Gerencie produtos, acompanhe validades e tome decisões baseadas em dados reais com a plataforma Valistoque.</p>
+        <div class="card-buttons">
+            <a href="1tela.html">
+            <button class="btn-primary">Começar agora &rarr;</button>
+            </a>
+        </div>
+    </main>
+
+    <!-- FAIXA ANIMADA -->
+    <div class="container-faixa">
+        <div class="frases">
+            <p>• Controle total hoje. Lucro garantido amanhã •</p>
+            <p>• Cada produto vencido é dinheiro jogado fora •</p>
+            <p>• Chega de surpresas com mercadorias vencidas •</p>
+            <p>• Assuma o controle antes que o estoque controle você •</p>
+            <p>• Controle total hoje. Lucro garantido amanhã •</p>
+            <p>• Cada produto vencido é dinh
+                eiro jogado fora •</p>
+            <p>• Chega de surpresas com mercadorias vencidas •</p>
+            <p>• Assuma o controle antes que o estoque controle você •</p>
+        </div>
+    </div>
+
+    
+    <section class="positivo">
+        <div class="box-item">
+            <div class="icon-wrapper">📦</div>
+            <h2>Inventário Inteligente</h2>
+            <p>Monitore níveis de estoque em tempo real e receba alertas automáticos de reposição para nunca ficar sem produtos.</p>
+        </div>
+        <div class="box-item">
+            <div class="icon-wrapper">📅</div>
+            <h2>Gestão de Validades</h2>
+            <p>Evite perdas financeiras com nosso sistema de alerta antecipado para produtos que estão próximos do vencimento.</p>
+        </div>
+        <div class="box-item">
+            <div class="icon-wrapper">📊</div>
+            <h2>Relatórios Detalhados</h2>
+            <p>Visualize o desempenho de suas vendas e o giro de estoque através de gráficos intuitivos e fáceis de entender.</p>
+        </div>
+        <div class="box-item">
+            <div class="icon-wrapper">🔒</div>
+            <h2>Segurança Total</h2>
+            <p>Dados protegidos com controle de acesso por usuário.</p>
+        </div>
+    </section>
+</body>
+</html>

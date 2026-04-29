@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tela 1 </title>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #ffffff 70%, #5ebddc 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container-principal {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0px; 
+        }
+
+        .logo {
+            width: 400px; 
+            height: auto;
+            max-width: 90%;
+            display: block;
+            margin: 0 auto; 
+        object-fit: cover;         
+    }
+
+        
+        .titulo-container {
+            margin-top: -20px; 
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: rgb(78, 78, 230);
+            font-family: Georgia, serif;
+            margin: 0; 
+            line-height: 1;
+        }
+
+        .cor-diferente {
+            color: rgb(52, 217, 52);
+        }
+
+        h3 {
+            color: #555;
+            font-weight: normal;
+            margin: 5px 0 0 0; 
+        }
+
+        .entrada {
+            background: rgba(255, 255, 255, 0.2); 
+            backdrop-filter: blur(15px); 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            width: 400px;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            margin-top: 0;
+        }
+
+        button {
+            background-color: #8a8a8a;
+            padding: 15px; 
+            width: 100%; 
+            font-size: 18px;
+            border-radius: 50px; 
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .admin:hover {
+            background-color: #0a78ee;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(10, 120, 238, 0.3);
+        }
+        .func:hover{
+            background-color: #06d324;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(33, 238, 10, 0.3);
+        }
+    .titulo-container{
+       position: absolute;
+            top:43%;    /* Move para o meio vertical */
+
+}
+    .entrada{
+       position: absolute;
+            top:50%;
+}
+    .logo{
+       position: absolute;
+            top:-5%;
+}  
+
+
+
+    </style>
+</head>
+<body>
+    <div class="container-principal">
+        
+        <img src="logo.PNG" alt="Logo do Sistema" class="logo">
+        
+        <div class="titulo-container">
+            <h1>Valis<span class="cor-diferente">to</span>que</h1>
+            <h3>Gestão Eficiente de Estoque e Validade</h3>
+        </div>
+
+       
+        <div class="entrada">
+            <h2>Bem-Vindo!<br>Selecione seu perfil para entrar:</h2>
+            <a href="2tela_admin.html">
+        <button name="admin" class="admin">Administrador</button>  
+        </a>
+        <a href="2tela_func.html">
+            <button name="func" class="func">Funcionário</button>
+            </a>
+        </div>
+   </div>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codigo</title>
+    <link href='https://unpkg.com' rel='stylesheet'>
+    <style>
+       @import url('https://fonts.googleapis.com/css2?family=Rationale&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Rationale', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #ffffff 70%, #708090 100%);
+            background-attachment: fixed;
+        }
+
+        .logo {
+            width: 700px; 
+            height: auto;
+            max-width: 90%;
+            float: left; 
+            object-fit: cover;
+        }
+
+        .nome {
+            font-family: Georgia, serif;
+            position: absolute;
+            top: 75%;
+            left: 32%;
+            transform: translate(-50%, -50%); 
+            font-weight: bold;
+            font-size: 50px; 
+            color: rgb(78, 78, 230);
+            line-height: 1;
+        }
+
+        .cor-diferente {
+            color: rgb(52, 217, 52);
+        }
+
+        .container-recupera {
+            width: 420px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 30px 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(20px);
+            margin-left: 20px;
+        }
+
+        .container-recupera h1 {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        
+        .instrucao {
+            font-size: 18px; 
+            text-align: center;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .recupera-box {
+            position: relative;
+            width: 100%;
+            height: 50px;
+            margin: 20px 0;
+        }
+
+        .recupera-box input {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-radius: 40px;
+            outline: none;
+            font-size: 16px;
+            color: black;
+            padding: 0 45px 0 20px;
+        }
+
+        
+
+        .voltar {
+            text-decoration: none;
+            color: gray;
+            font-size: 14px;
+        }
+
+        .botao {
+            width: 100%;
+            height: 45px;
+            background: #778899;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .botao:hover {
+            background: transparent;
+            border: 2px solid #778899;
+        }
+
+        .baixo{
+        font-family: "Quicksand", sans-serif;
+        font-size: 12px;
+        text-align: center;
+        color: #bac0be;
+    }
+
+    </style>
+</head>
+<body>
+    <div>
+        <img src="Design sem nome (5).png" alt="Logo do Sistema" class="logo">
+        <h1 class="nome">Valis<span class="cor-diferente">to</span>que</h1>
+    </div>
+
+    <main class="container-recupera">
+        <form id="formRecupera">
+            <a href="javascript:history.back()" class="voltar">&larr; Voltar para seleção</a>
+            <h1>Recupere sua senha</h1>
+             
+            <h2 class="instrucao">Digite o código enviado ao seu e-mail:</h2>
+
+            <div class="recupera-box">
+                <input type="password" placeholder="000000" required>
+            </div>
+
+            <button type="submit" class="botao">Verificar Código</button>
+            <p class="baixo">
+              &copy; 2026 Valistoque. Todos os direitos reservados.
+            </p>
+        </form>
+        <div id="mensagem"></div>
+    </main>
+
+    <script>
+        document.getElementById('formRecupera').onsubmit = function(e) {
+            e.preventDefault();
+            document.getElementById('mensagem').innerText = "Verificando código...";
+        };
+    </script>
+</body>
+</html>

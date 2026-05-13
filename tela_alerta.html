@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Alertas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+
+        /* Barra Lateral */
+        .sidebar {
+            width: 260px;
+            background-color: #ffffff;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .menu-items {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            color: #5f6368;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            background-color: #f1f3f4;
+            color: #1a73e8;
+        }
+
+        .menu-item.active {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+            border-left: 4px solid #1a73e8;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #d93025;
+            border-radius: 50%;
+            margin-left: auto;
+        }
+
+        .logout-btn {
+            border-top: 1px solid #e0e0e0;
+            color: #d93025;
+        }
+
+        /* Painel Principal */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Cabeçalho */
+        .header {
+            height: 60px;
+             background: linear-gradient(to left, #2d6a96, #5381a25a);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* Conteúdo dos Alertas */
+        .content {
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .alert-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            background-color: #fafafa;
+            border-bottom: 1px solid #f0f0f0;
+            font-weight: 600;
+        }
+
+        /* Cores dos Alertas */
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+
+        .stock-alert .indicator { background-color: #f2994a; }
+        .expiry-alert .indicator { background-color: #eb5757; }
+
+        .section-title {
+            flex: 1;
+            font-size: 1rem;
+        }
+
+        /* Tabela / Lista de Itens */
+        .alert-list {
+            list-style: none;
+        }
+
+        .alert-item {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1.5fr auto;
+            padding: 14px 20px;
+            border-bottom: 1px solid #f8f9fa;
+            align-items: center;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-item:hover {
+            background-color: #fdfdfd;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #202124;
+        }
+
+        .item-details {
+            color: #5f6368;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #dadce0;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+            padding: 0 5px;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #5f6368;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barra Lateral -->
+    <aside class="sidebar">
+        <div class="menu-items">
+            <a href="#" class="menu-item">📋 Relatório</a>
+            <a href="#" class="menu-item">📦 Cadastro produtos</a>
+            <a href="#" class="menu-item">🗂️ Prateleiras</a>
+            <a href="#" class="menu-item">🏢 Estoque central</a>
+            <a href="#" class="menu-item active">⚠️ Alertas <span class="badge-dot"></span></a>
+        </div>
+        <a href="#" class="menu-item logout-btn">🚪 Sair</a>
+    </aside>
+
+    <!-- Área Principal -->
+    <div class="main-container">
+        
+        <!-- Cabeçalho -->
+        <header class="header">
+            <h2>Painel de Controle</h2>
+            <div class="user-info">
+                <span>👤 Funcionário</span>
+            </div>
+        </header>
+
+        <!-- Conteúdo -->
+        <main class="content">
+
+            <!-- Seção de Estoque -->
+            <section class="alert-section stock-alert">
+                <div class="section-header">
+                    <span class="indicator"></span>
+                    <span class="section-title">Aviso de Estoque Mínimo</span>
+                    <span class="close-btn">🗁</span>
+                </div>
+                <ul class="alert-list">
+                    <li class="alert-item">
+                        <span class="item-name">Arroz</span>
+                        <span class="item-details">Setor D</span>
+                        <span class="item-details">Prateleira A</span>
+                        <span class="item-details">Cod: 8358304</span>
+                        <span class="item-details">14/04/2026</span>
+                        <button class="close-btn">&times;</button>
+                    </li>
+                    <li class="alert-item">
+                        <span class="item-name">Arroz</span>
+                        <span class="item-details">Setor D</span>
+                        <span class="item-details">Prateleira A</span>
+                        <span class="item-details">Cod: 8358304</span>
+                        <span class="item-details">14/04/2026</span>
+                        <button class="close-btn">&times;</button>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Seção de Validade -->
+            <section class="alert-section expiry-alert">
+                <div class="section-header">
+                    <span class="indicator"></span>
+                    <span class="section-title">Produtos Próximos ao Vencimento</span>
+                    <span class="close-btn">🗁</span>
+                </div>
+                <ul class="alert-list">
+                    <li class="alert-item">
+                        <span class="item-name">Leite</span>
+                        <span class="item-details">Setor B</span>
+                        <span class="item-details">Prateleira B</span>
+                        <span class="item-details">Cod: 1837299</span>
+                        <span class="item-details">11/04/2026</span>
+                        <button class="close-btn">&times;</button>
+                    </li>
+                </ul>
+            </section>
+
+        </main>
+    </div>
+
+
+        <script>
+
+        </script>
+</body>
+</html>

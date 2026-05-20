@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../Vali_stoque"
+		},
+		{
+			"name": "Nova pasta",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Nova pasta"
+	}
+}

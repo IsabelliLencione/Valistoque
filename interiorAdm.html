@@ -286,6 +286,51 @@
             background-color: #dfe4ea;
         }
 
+
+
+        /* Tela de Alertas */
+        .alertas-page { background-color: #e6e6e6; padding: 24px; border-radius: 10px; }
+        .alertas-grid { display: grid; grid-template-columns: minmax(320px, 380px) 1fr; gap: 24px; align-items: start; }
+        .alertas-card { background: #fff; border-radius: 10px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .alertas-card h2 { font-size: 20px; margin-bottom: 16px; color: #1a252f; }
+        .alertas-card p { color: #555; margin-bottom: 18px; }
+        .alertas-card button { margin-top: 6px; }
+        .alertas-resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+        .resumo-box { background: linear-gradient(135deg, #3498db, #1f6fa5); color: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.18); }
+        .resumo-box.alerta-critico { background: linear-gradient(135deg, #e74c3c, #b3392b); }
+        .resumo-box.alerta-aviso { background: linear-gradient(135deg, #f39c12, #d35400); }
+        .resumo-box span { display: block; font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
+        .resumo-box strong { font-size: 26px; }
+        .historico-alertas { background: #fff; border-radius: 10px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .historico-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .historico-header h2 { margin: 0; font-size: 20px; color: #1a252f; }
+        .filtros-alerta { display: flex; gap: 10px; flex-wrap: wrap; }
+        .filtro-btn { width: auto; padding: 10px 16px; border-radius: 999px; background: #ecf0f1; color: #2c3e50; border: 1px solid #d0d7de; font-size: 14px; }
+        .filtro-btn.ativo { background: #1a252f; color: #fff; border-color: #1a252f; }
+        .lista-alertas-completa { display: flex; flex-direction: column; gap: 14px; max-height: 620px; overflow-y: auto; padding-right: 4px; }
+        .alerta-item { border: 1px solid #e6ebf0; border-left: 6px solid #3498db; border-radius: 10px; padding: 16px; background: #fafcfd; }
+        .alerta-item h3 { font-size: 18px; color: #1a252f; margin-bottom: 8px; }
+        .alerta-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: #4f5b67; margin-bottom: 8px; }
+        .alerta-mensagem { color: #334155; line-height: 1.5; }
+        .tag-alerta { display: inline-flex; align-items: center; justify-content: center; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: bold; }
+        .tag-critico { background: #fdecea; color: #c0392b; }
+        .tag-aviso { background: #fff4e5; color: #d35400; }
+        .tag-info { background: #eaf4fb; color: #2471a3; }
+        .texto-auxiliar { font-size: 13px; color: #6b7280; margin-top: -10px; margin-bottom: 16px; }
+        .vazio-alertas { padding: 28px; text-align: center; color: #6b7280; background: #f8fafc; border-radius: 10px; border: 1px dashed #cbd5e1; }
+
+        @media (max-width: 1100px) {
+            .alertas-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding-left: 0; }
+            .nav { position: relative; width: 100%; height: auto; }
+            main { padding: 20px; }
+            .alertas-resumo { grid-template-columns: 1fr; }
+            .cards-grid { grid-template-columns: 1fr; }
+        }
+
     </style> 
 </head> 
 <body> 
@@ -478,9 +523,68 @@
             <div class="cards-container"></div> 
         </div> 
 
-        <!--SEcÃO ALERTA-->
+        <!--SEÇÃO ALERTA-->
         <div id="secao-alertas">
+            <div class="alertas-page">
+                <div class="secao-header">
+                    <h1>Central de Alertas</h1>
+                </div>
 
+                <div class="alertas-grid">
+                    <div class="alertas-card">
+                        <h2>Configuração dos avisos</h2>
+                        <p>Defina quando o sistema deve avisar sobre validade próxima e estoque acabando.</p>
+                        <form id="form-config-alertas" onsubmit="salvarConfiguracoesAlertas(event)">
+                            <label for="dias-alerta-validade">Dias antes da validade para alertar</label>
+                            <input type="number" id="dias-alerta-validade" min="1" value="30" required>
+
+                            <label for="caixas-alerta-estoque">Quantidade mínima de caixas para alerta</label>
+                            <input type="number" id="caixas-alerta-estoque" min="1" value="10" required>
+
+                            <label for="intervalo-alerta">Revisar alertas automaticamente a cada</label>
+                            <select id="intervalo-alerta" required>
+                                <option value="5">5 minutos</option>
+                                <option value="10">10 minutos</option>
+                                <option value="15">15 minutos</option>
+                                <option value="30">30 minutos</option>
+                                <option value="60">60 minutos</option>
+                            </select>
+                            <div class="texto-auxiliar">As configurações ficam salvas no navegador para as próximas visitas.</div>
+                            <button type="submit">Salvar configuração</button>
+                        </form>
+                    </div>
+
+                    <div>
+                        <div class="alertas-resumo">
+                            <div class="resumo-box">
+                                <span>Total de alertas emitidos</span>
+                                <strong id="resumo-total-alertas">0</strong>
+                            </div>
+                            <div class="resumo-box alerta-critico">
+                                <span>Alertas críticos</span>
+                                <strong id="resumo-alertas-criticos">0</strong>
+                            </div>
+                            <div class="resumo-box alerta-aviso">
+                                <span>Alertas de aviso</span>
+                                <strong id="resumo-alertas-aviso">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="historico-alertas">
+                            <div class="historico-header">
+                                <h2>Alertas emitidos pelo site</h2>
+                                <div class="filtros-alerta">
+                                    <button type="button" class="filtro-btn ativo" data-filtro="todos" onclick="filtrarAlertas('todos')">Todos</button>
+                                    <button type="button" class="filtro-btn" data-filtro="validade" onclick="filtrarAlertas('validade')">Validade</button>
+                                    <button type="button" class="filtro-btn" data-filtro="estoque" onclick="filtrarAlertas('estoque')">Estoque</button>
+                                    <button type="button" class="filtro-btn" data-filtro="critico" onclick="filtrarAlertas('critico')">Críticos</button>
+                                </div>
+                            </div>
+                            <div class="lista-alertas-completa" id="lista-alertas-completa"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
 
@@ -536,9 +640,20 @@
         // Arrays globais para persistência de dados
         let produtosEstoque = [];
         let alocacoesPrateleiras = [];
+        let configuracoesAlertas = {
+            diasAntesValidade: 30,
+            caixasMinimas: 10,
+            intervaloMinutos: 15
+        };
+        let historicoAlertas = [];
+        let filtroAtualAlertas = 'todos';
+        let intervaloMonitoramentoAlertas = null;
 
         window.onload = function() { 
             carregarDadosDoStorage();
+            preencherFormularioAlertas();
+            processarAlertas();
+            iniciarMonitoramentoAlertas();
             Relatorio(); 
             inicializarLogicaPrateleiras();
         }; 
@@ -547,18 +662,22 @@
         function salvarProdutosNoStorage() {
             localStorage.setItem('produtosEstoque', JSON.stringify(produtosEstoque));
             renderizarCardsEstoque();
+            processarAlertas();
         }
 
         // Salva e renderiza a lista de prateleiras no localStorage
         function salvarPrateleirasNoStorage() {
             localStorage.setItem('alocacoesPrateleiras', JSON.stringify(alocacoesPrateleiras));
             renderizarCardsPrateleiras();
+            processarAlertas();
         }
 
         // Recupera as informações ao recarregar a tela
         function carregarDadosDoStorage() {
             const produtosSalvos = localStorage.getItem('produtosEstoque');
             const prateleirasSalvas = localStorage.getItem('alocacoesPrateleiras');
+            const configuracoesSalvas = localStorage.getItem('configuracoesAlertas');
+            const historicoSalvo = localStorage.getItem('historicoAlertas');
 
             // Caso o banco esteja vazio, insere itens padrão iniciais
             if (produtosSalvos) {
@@ -579,6 +698,19 @@
                     { id: 'prat-card-ex1', numero: '12', nome: 'Arroz Integral', caixas: 10, unidades: 100, validade: '15/12/2027', lote: '40221' }
                 ];
                 localStorage.setItem('alocacoesPrateleiras', JSON.stringify(alocacoesPrateleiras));
+            }
+
+            if (configuracoesSalvas) {
+                configuracoesAlertas = { ...configuracoesAlertas, ...JSON.parse(configuracoesSalvas) };
+            } else {
+                localStorage.setItem('configuracoesAlertas', JSON.stringify(configuracoesAlertas));
+            }
+
+            if (historicoSalvo) {
+                historicoAlertas = JSON.parse(historicoSalvo);
+            } else {
+                historicoAlertas = [];
+                localStorage.setItem('historicoAlertas', JSON.stringify(historicoAlertas));
             }
 
             renderizarCardsEstoque();
@@ -905,7 +1037,6 @@
             IDs.forEach(id => {
                 let html = "";
                 for(let i=1; i<=10; i++) {
-                    // MUDANÇA: O número de caixas e o lote agora mudam conforme o índice do mês (mesIdx)
                     let caixasDinamicas = (i * 2) + mesIdx; 
                     let loteFixo = 1000 + i + (mesIdx * 5);
                     html += `<div class="list-item"><span>${caixasDinamicas} caixas</span><span>Lote: ${loteFixo}</span><span>${i}/${mesIdx+1}</span></div>`;
@@ -913,22 +1044,207 @@
                 const el = document.getElementById(id);
                 if(el) el.innerHTML = html;
             });
-            
-            // MUDANÇA: Alertas agora exibem dados diferentes baseados no mês selecionado
-            const listaAlertas = document.getElementById('lista-alertas');
-            if(listaAlertas) {
-                let loteAlerta1 = 1040 + mesIdx;
-                let loteAlerta2 = 980 + mesIdx;
-                listaAlertas.innerHTML = `
-                    <div class="list-item" style="color:red">Vencimento próximo: Lote ${loteAlerta1} (Ref: ${meses[mesIdx]})</div>
-                    <div class="list-item" style="color:orange">Estoque baixo: Bebidas - Setor ${mesIdx + 1}</div>
-                    <div class="list-item" style="color:red">Validade expirada: Lote ${loteAlerta2} (Remover urgente)</div>
-                      <div class="list-item" style="color:red">Vencimento próximo: Lote ${loteAlerta1} (Ref: ${meses[mesIdx]})</div>
-                    <div class="list-item" style="color:orange">Estoque baixo: Bebidas - Setor ${mesIdx + 1}</div>
-                    <div class="list-item" style="color:red">Validade expirada: Lote ${loteAlerta2} (Remover urgente)</div>
-                   
-                `;
+
+            atualizarResumoAlertas();
+            renderizarAlertasRelatorio();
+        }
+
+
+    // Parte da CENTRAL DE ALERTAS
+        function salvarConfiguracoesAlertas(event) {
+            event.preventDefault();
+
+            configuracoesAlertas = {
+                diasAntesValidade: parseInt(document.getElementById('dias-alerta-validade').value) || 30,
+                caixasMinimas: parseInt(document.getElementById('caixas-alerta-estoque').value) || 10,
+                intervaloMinutos: parseInt(document.getElementById('intervalo-alerta').value) || 15
+            };
+
+            localStorage.setItem('configuracoesAlertas', JSON.stringify(configuracoesAlertas));
+            processarAlertas(true);
+            iniciarMonitoramentoAlertas();
+            alert('Configurações de alerta salvas com sucesso!');
+        }
+
+        function preencherFormularioAlertas() {
+            const dias = document.getElementById('dias-alerta-validade');
+            const caixas = document.getElementById('caixas-alerta-estoque');
+            const intervalo = document.getElementById('intervalo-alerta');
+
+            if (dias) dias.value = configuracoesAlertas.diasAntesValidade;
+            if (caixas) caixas.value = configuracoesAlertas.caixasMinimas;
+            if (intervalo) intervalo.value = String(configuracoesAlertas.intervaloMinutos);
+        }
+
+        function iniciarMonitoramentoAlertas() {
+            if (intervaloMonitoramentoAlertas) {
+                clearInterval(intervaloMonitoramentoAlertas);
             }
+
+            const intervaloMs = (configuracoesAlertas.intervaloMinutos || 15) * 60 * 1000;
+            intervaloMonitoramentoAlertas = setInterval(() => processarAlertas(), intervaloMs);
+        }
+
+        function formatarDataHora(dataISO) {
+            const data = new Date(dataISO);
+            return data.toLocaleString('pt-BR');
+        }
+
+        function converterDataBrParaDate(dataBr) {
+            if (!dataBr) return null;
+            if (dataBr.includes('-')) {
+                return new Date(`${dataBr}T00:00:00`);
+            }
+            const partes = dataBr.split('/');
+            if (partes.length !== 3) return null;
+            return new Date(`${partes[2]}-${partes[1]}-${partes[0]}T00:00:00`);
+        }
+
+        function diferencaEmDias(dataFutura) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const alvo = new Date(dataFutura);
+            alvo.setHours(0, 0, 0, 0);
+            return Math.ceil((alvo - hoje) / (1000 * 60 * 60 * 24));
+        }
+
+        function salvarHistoricoAlertas() {
+            historicoAlertas.sort((a, b) => new Date(b.dataHora) - new Date(a.dataHora));
+            localStorage.setItem('historicoAlertas', JSON.stringify(historicoAlertas));
+        }
+
+        function registrarAlerta(alerta) {
+            const jaExiste = historicoAlertas.some(item => item.chave === alerta.chave && item.status === alerta.status);
+            if (jaExiste) return;
+            historicoAlertas.unshift(alerta);
+        }
+
+        function processarAlertas(forcarRegistro = false) {
+            const alertasEncontrados = [];
+            const agora = new Date().toISOString();
+
+            produtosEstoque.forEach(prod => {
+                const dataValidade = converterDataBrParaDate(prod.validade);
+                const diasRestantes = dataValidade ? diferencaEmDias(dataValidade) : null;
+
+                if (diasRestantes !== null && diasRestantes <= configuracoesAlertas.diasAntesValidade) {
+                    const status = diasRestantes <= 0 ? 'critico' : 'aviso';
+                    const mensagem = diasRestantes <= 0
+                        ? `O produto ${prod.nome} do lote ${prod.lote} está com a validade vencida e precisa de ação imediata.`
+                        : `O produto ${prod.nome} do lote ${prod.lote} vence em ${diasRestantes} dia(s).`;
+
+                    alertasEncontrados.push({
+                        chave: `validade-${prod.lote}-${status}`,
+                        tipo: 'validade',
+                        status,
+                        produto: prod.nome,
+                        lote: prod.lote,
+                        referencia: diasRestantes <= 0 ? 'Validade vencida' : `${diasRestantes} dia(s) restantes`,
+                        mensagem,
+                        dataHora: agora
+                    });
+                }
+
+                if ((prod.caixas || 0) <= configuracoesAlertas.caixasMinimas) {
+                    const status = (prod.caixas || 0) <= Math.max(1, Math.ceil(configuracoesAlertas.caixasMinimas / 2)) ? 'critico' : 'aviso';
+                    const mensagem = `O produto ${prod.nome} está com apenas ${prod.caixas || 0} caixa(s) no estoque central.`;
+
+                    alertasEncontrados.push({
+                        chave: `estoque-${prod.lote}-${status}`,
+                        tipo: 'estoque',
+                        status,
+                        produto: prod.nome,
+                        lote: prod.lote,
+                        referencia: `${prod.caixas || 0} caixa(s) disponíveis`,
+                        mensagem,
+                        dataHora: agora
+                    });
+                }
+            });
+
+            if (forcarRegistro || alertasEncontrados.length) {
+                alertasEncontrados.forEach(registrarAlerta);
+                salvarHistoricoAlertas();
+            }
+
+            atualizarResumoAlertas();
+            renderizarAlertasCompletos();
+            renderizarAlertasRelatorio();
+        }
+
+        function obterAlertasFiltrados() {
+            if (filtroAtualAlertas === 'todos') return historicoAlertas;
+            if (filtroAtualAlertas === 'critico') return historicoAlertas.filter(item => item.status === 'critico');
+            return historicoAlertas.filter(item => item.tipo === filtroAtualAlertas);
+        }
+
+        function filtrarAlertas(filtro) {
+            filtroAtualAlertas = filtro;
+            document.querySelectorAll('.filtro-btn').forEach(btn => {
+                btn.classList.toggle('ativo', btn.dataset.filtro === filtro);
+            });
+            renderizarAlertasCompletos();
+        }
+
+        function atualizarResumoAlertas() {
+            const total = historicoAlertas.length;
+            const criticos = historicoAlertas.filter(item => item.status === 'critico').length;
+            const avisos = historicoAlertas.filter(item => item.status === 'aviso').length;
+
+            const totalEl = document.getElementById('resumo-total-alertas');
+            const criticosEl = document.getElementById('resumo-alertas-criticos');
+            const avisosEl = document.getElementById('resumo-alertas-aviso');
+
+            if (totalEl) totalEl.innerText = total;
+            if (criticosEl) criticosEl.innerText = criticos;
+            if (avisosEl) avisosEl.innerText = avisos;
+        }
+
+        function renderizarAlertasCompletos() {
+            const container = document.getElementById('lista-alertas-completa');
+            if (!container) return;
+
+            const alertas = obterAlertasFiltrados();
+            if (!alertas.length) {
+                container.innerHTML = '<div class="vazio-alertas">Nenhum alerta emitido até o momento.</div>';
+                return;
+            }
+
+            container.innerHTML = alertas.map(alerta => {
+                const classeTag = alerta.status === 'critico' ? 'tag-critico' : alerta.status === 'aviso' ? 'tag-aviso' : 'tag-info';
+                const textoTag = alerta.status === 'critico' ? 'Crítico' : alerta.status === 'aviso' ? 'Aviso' : 'Informativo';
+                const corBorda = alerta.status === 'critico' ? '#e74c3c' : alerta.tipo === 'estoque' ? '#f39c12' : '#3498db';
+                const tipoLabel = alerta.tipo === 'estoque' ? 'Estoque' : 'Validade';
+                return `
+                    <div class="alerta-item" style="border-left-color: ${corBorda}">
+                        <div class="alerta-meta">
+                            <span class="tag-alerta ${classeTag}">${textoTag}</span>
+                            <span><strong>Tipo:</strong> ${tipoLabel}</span>
+                            <span><strong>Produto:</strong> ${alerta.produto}</span>
+                            <span><strong>Lote:</strong> ${alerta.lote}</span>
+                            <span><strong>Emitido em:</strong> ${formatarDataHora(alerta.dataHora)}</span>
+                        </div>
+                        <h3>${alerta.referencia}</h3>
+                        <div class="alerta-mensagem">${alerta.mensagem}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderizarAlertasRelatorio() {
+            const listaAlertas = document.getElementById('lista-alertas');
+            if (!listaAlertas) return;
+
+            const recentes = historicoAlertas.slice(0, 6);
+            if (!recentes.length) {
+                listaAlertas.innerHTML = '<div class="list-item">Nenhum alerta emitido.</div>';
+                return;
+            }
+
+            listaAlertas.innerHTML = recentes.map(alerta => {
+                const cor = alerta.status === 'critico' ? 'red' : alerta.tipo === 'estoque' ? 'orange' : '#3498db';
+                return `<div class="list-item" style="color:${cor}">${alerta.produto} - ${alerta.referencia}</div>`;
+            }).join('');
         }
 
     //Perfil

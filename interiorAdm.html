@@ -367,13 +367,13 @@
     <nav class="nav"> 
         <div class="header-nav">Valistoque</div> 
          <ul> 
-            <li><a onclick="Relatorio()">Relatório</a></li> 
-            <li><a onclick="Produto()">Cadastro Produtos</a></li> 
-            <li><a onclick="Usuarios()">Cadastro Usuários</a></li> 
-            <li><a onclick="Prateleira()">Prateleiras</a></li> 
-            <li><a onclick="Estoque()">Estoque Central</a></li> 
-            <li><a onclick="Alertas()">Alertas</a></li> 
-             <li style="margin-top: auto; border-top: 1px solid #34495e;"><a onclick="Perfil()">Perfil</a></li> 
+            <li><a href="#relatorio" onclick="Relatorio(event)">Relatório</a></li> 
+            <li><a href="#produto" onclick="Produto(event)">Cadastro Produtos</a></li> 
+            <li><a href="#usuarios" onclick="Usuarios(event)">Cadastro Usuários</a></li> 
+            <li><a href="#prateleira" onclick="Prateleira(event)">Prateleiras</a></li> 
+            <li><a href="#estoque" onclick="Estoque(event)">Estoque Central</a></li> 
+            <li><a href="#alertas" onclick="Alertas(event)">Alertas</a></li> 
+             <li style="margin-top: auto; border-top: 1px solid #34495e;"><a href="#perfil" onclick="Perfil(event)">Perfil</a></li> 
         </ul> 
     </nav> 
     <main> 
@@ -631,34 +631,34 @@
             </div>
             <input type="file" id="file-input" accept="image/*" onchange="previewImage(event)">
             
-            <h2>Perfil do Administrador</h2>
+            <h2 id="titulo-perfil-admin">Perfil do Administrador</h2>
         </div>
 
         <form id="profile-form" onsubmit="saveProfile(event)">
             <!-- Campo Nome (Editável) -->
             <div class="info-group">
                 <label class="label" for="user-name">Nome do usuário:</label>
-                <input type="text" id="user-name" class="input-field" value="Carlos Augusto da Silva" required>
+                <input type="text" id="user-name" class="input-field" value="Administrador Valistoque" required>
             </div>
 
             <!-- Campo E-mail (Editável) -->
             <div class="info-group">
                 <label class="label" for="user-email">Email do usuário:</label>
-                <input type="email" id="user-email" class="input-field" value="carlos.admin@empresa.com" required>
+                <input type="email" id="user-email" class="input-field" value="admin@valistoque.com" required>
             </div>
 
             <!-- Campo Tipo de Conta (Apenas Leitura para segurança) -->
             <div class="info-group">
                 <span class="label">Tipo de conta:</span>
                 <div class="input-field disabled-field">
-                    <span class="badge">Administrador</span>
+                    <span class="badge" id="badge-perfil">Administrador</span>
                 </div>
             </div>
 
             <!-- Botões organizados -->
             <div class="button-group">
                 <button type="submit" class="btn-save">Salvar Alterações</button>
-                <a href="index.html" class="btn-exit">Sair para a tela principal</a>
+                <a href="Principal.html" class="btn-exit">Sair para a tela principal</a>
             </div>
         </form>
     </div>
@@ -677,13 +677,15 @@
         let historicoAlertas = [];
         let filtroAtualAlertas = 'todos';
         let intervaloMonitoramentoAlertas = null;
+        const usuarioSalvoPainel = JSON.parse(localStorage.getItem('valistoqueUsuario') || '{}');
+        window.addEventListener('hashchange', abrirSecaoPelaHash);
 
         window.onload = function() { 
             carregarDadosDoStorage();
             preencherFormularioAlertas();
             processarAlertas();
             iniciarMonitoramentoAlertas();
-            Relatorio(); 
+            abrirSecaoPelaHash(); 
             inicializarLogicaPrateleiras();
         }; 
 
@@ -985,14 +987,36 @@
             document.getElementById('secao-perfil').style.display = 'none';
         } 
         
-        function Relatorio() { esconderTodasSecoes(); document.getElementById('secao-relatorio').style.display = 'block'; } 
-        function Produto() { esconderTodasSecoes(); document.getElementById('secao-produto').style.display = 'block'; } 
-        function Usuarios() { esconderTodasSecoes(); document.getElementById('secao-usuario').style.display = 'block'; } 
-        function Prateleira() { esconderTodasSecoes(); document.getElementById('secao-prateleira').style.display = 'block'; } 
-        function Estoque() { esconderTodasSecoes(); document.getElementById('secao-estoque').style.display = 'block'; } 
-        
-        function Alertas(){ esconderTodasSecoes(); document.getElementById('secao-alertas').style.display = 'block'; } 
-        function Perfil(){ esconderTodasSecoes(); document.getElementById('secao-perfil').style.display = 'block'; }
+        function mostrarSecao(idSecao, hash, event) {
+            if (event) event.preventDefault();
+            esconderTodasSecoes();
+            document.getElementById(idSecao).style.display = 'block';
+            if (hash && window.location.hash !== `#${hash}`) {
+                history.replaceState(null, '', `#${hash}`);
+            }
+        }
+
+        function Relatorio(event) { mostrarSecao('secao-relatorio', 'relatorio', event); } 
+        function Produto(event) { mostrarSecao('secao-produto', 'produto', event); } 
+        function Usuarios(event) { mostrarSecao('secao-usuario', 'usuarios', event); } 
+        function Prateleira(event) { mostrarSecao('secao-prateleira', 'prateleira', event); } 
+        function Estoque(event) { mostrarSecao('secao-estoque', 'estoque', event); } 
+        function Alertas(event){ mostrarSecao('secao-alertas', 'alertas', event); } 
+        function Perfil(event){ mostrarSecao('secao-perfil', 'perfil', event); }
+
+        function abrirSecaoPelaHash() {
+            const secoes = {
+                '#relatorio': Relatorio,
+                '#produto': Produto,
+                '#usuarios': Usuarios,
+                '#prateleira': Prateleira,
+                '#estoque': Estoque,
+                '#alertas': Alertas,
+                '#perfil': Perfil
+            };
+            const abrir = secoes[window.location.hash] || Relatorio;
+            abrir();
+        }
 
 
 
@@ -1025,6 +1049,17 @@
             });
         }
 
+        if (usuarioSalvoPainel?.email) {
+            const nomeCampo = document.getElementById('user-name');
+            const emailCampo = document.getElementById('user-email');
+            const badgePerfil = document.getElementById('badge-perfil');
+            const tituloPerfil = document.getElementById('titulo-perfil-admin');
+            if (nomeCampo) nomeCampo.value = usuarioSalvoPainel.nome || 'Usuário';
+            if (emailCampo) emailCampo.value = usuarioSalvoPainel.email;
+            if (badgePerfil) badgePerfil.textContent = usuarioSalvoPainel.perfil === 'funcionario' ? 'Funcionário' : 'Administrador';
+            if (tituloPerfil) tituloPerfil.textContent = `Perfil do ${usuarioSalvoPainel.perfil === 'funcionario' ? 'Funcionário' : 'Administrador'}`;
+        }
+
         function renderizarFuncionarios() {
             const tbody = document.querySelector('#tabela-funcionarios tbody');
             tbody.innerHTML = "";
@@ -1047,14 +1082,13 @@
 
 
     //Parte de RELATÓRIO
-   const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         
-        // Captura a data exata do relógio do computador
+        // data atual do sistema para bloqueio
         const hoje = new Date();
-        const mesReal = hoje.getMonth(); 
-        const anoReal = hoje.getFullYear(); 
+        const mesReal = hoje.getMonth();
+        const anoReal = hoje.getFullYear();
 
-        // Inicializa as variáveis de navegação com o mês e ano vigentes
         let mesIdx = mesReal; 
         let ano = anoReal;
 
@@ -1065,87 +1099,35 @@
             if (nMes > 11) { nMes = 0; nAno++; }
             else if (nMes < 0) { nMes = 11; nAno--; }
 
-            // Trava para impedir a visualização de projeções futuras
+            // Bloqueio de meses futuros
             if (nAno > anoReal || (nAno === anoReal && nMes > mesReal)) {
                 alert("Não é possível avançar para meses futuros.");
                 return;
             }
 
-            mesIdx = nMes; 
-            ano = nAno;
-            
-            // Atualiza os textos dinâmicos do topo
-            const txtMes = document.getElementById('txt-mes');
-            const txtAno = document.getElementById('txt-ano');
-            if (txtMes) txtMes.innerText = meses[mesIdx];
-            if (txtAno) txtAno.innerText = ano;
-            
+            mesIdx = nMes; ano = nAno;
+            document.getElementById('txt-mes').innerText = meses[mesIdx];
+            document.getElementById('txt-ano').innerText = ano;
             atualizarDados();
         }
 
         function atualizarDados() {
             const IDs = ['saida-estoque', 'entrada-estoque', 'saida-prateleira', 'entrada-prateleira'];
-            
             IDs.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return; // Se o elemento não existir na tela, ignora silenciosamente para não quebrar o script
-
                 let html = "";
-                for(let i = 1; i <= 10; i++) {
+                for(let i=1; i<=10; i++) {
                     let caixasDinamicas = (i * 2) + mesIdx; 
                     let loteFixo = 1000 + i + (mesIdx * 5);
                     html += `<div class="list-item"><span>${caixasDinamicas} caixas</span><span>Lote: ${loteFixo}</span><span>${i}/${mesIdx+1}</span></div>`;
                 }
-                el.innerHTML = html;
+                const el = document.getElementById(id);
+                if(el) el.innerHTML = html;
             });
 
-            // Executa atualizações secundárias apenas se as funções existirem declaradas
-            try {
-                if (typeof atualizarResumoAlertas === 'function') atualizarResumoAlertas();
-                if (typeof renderizarAlertasRelatorio === 'function') renderizarAlertasRelatorio();
-            } catch (e) {
-                console.warn("Aviso de renderização de alertas reprimido:", e);
-            }
+            atualizarResumoAlertas();
+            renderizarAlertasRelatorio();
         }
 
-        // --- INICIALIZAÇÃO BLINDADA VIA EVENT LISTENER ---
-        // Usar DOMContentLoaded garante que o HTML inteiro foi lido e evita erros de elementos nulos
-        document.addEventListener("DOMContentLoaded", function() {
-            try {
-                // 1. Configura os arrays globais obrigatórios na memória antes de qualquer render
-                if (typeof produtosEstoque === 'undefined') produtosEstoque = [];
-                if (typeof alocacoesPrateleiras === 'undefined') alocacoesPrateleiras = [];
-                if (typeof historicoAlertas === 'undefined') historicoAlertas = [];
-
-                // 2. Tenta extrair dados salvos do Storage
-                if (typeof carregarDadosDoStorage === 'function') {
-                    try { carregarDadosDoStorage(); } catch(e) { console.error("Erro no estoque storage:", e); }
-                }
-                
-                if (typeof carregarPerfilDoStorage === 'function') {
-                    try { carregarPerfilDoStorage(); } catch(e) { console.error("Erro no perfil storage:", e); }
-                }
-
-                // 3. Força as labels de cabeçalho para o mês/ano de hoje
-                const txtMesEl = document.getElementById('txt-mes');
-                const txtAnoEl = document.getElementById('txt-ano');
-                if (txtMesEl) txtMesEl.innerText = meses[mesIdx];
-                if (txtAnoEl) txtAnoEl.innerText = ano;
-
-                // 4. Executa os motores de alertas e rotinas secundárias
-                if (typeof preencherFormularioAlertas === 'function') preencherFormularioAlertas();
-                if (typeof processarAlertas === 'function') processarAlertas();
-                if (typeof iniciarMonitoramentoAlertas === 'function') iniciarMonitoramentoAlertas();
-                if (typeof inicializarLogicaPrateleiras === 'function') inicializarLogicaPrateleiras();
-
-            } catch (erroGlobal) {
-                console.error("Falha contida na rotina de inicialização:", erroGlobal);
-            } finally {
-                // Mesmo que qualquer outra tela falhe, o relatório vai abrir e funcionar
-                atualizarDados(); 
-                Relatorio();
-            }
-        });
 
     // Parte da CENTRAL DE ALERTAS
         function salvarConfiguracoesAlertas(event) {

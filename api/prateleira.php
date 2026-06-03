@@ -1,5 +1,13 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - API REST  /api/prateleira.php
+ *  GET    -> listar / consultar prateleiras
+ *  POST   -> adicionar item à prateleira
+ *  PUT    -> atualizar (?id=N)
+ *  DELETE -> remover   (?id=N — apenas admin)
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/alertas_check.php';
 exigirLogin();

@@ -1,7 +1,15 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - API REST  /api/produtos.php
+ *  GET    -> listar / consultar produtos
+ *  POST   -> cadastrar produto
+ *  PUT    -> atualizar produto (?id=N)
+ *  DELETE -> excluir produto    (?id=N — apenas admin)
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
-exigirLogin();                                      // usuário precisa estar logado
+exigirLogin();
 header('Content-Type: application/json; charset=utf-8');
 
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -22,11 +30,9 @@ try {
                 $busca     = $_GET['busca']     ?? '';
                 $categoria = $_GET['categoria'] ?? '';
                 $sql = "SELECT p.*,
-                               COALESCE(SUM(e.quant_prod), 0)  AS total_estoque,
-                               COALESCE(SUM(pr.quant_item), 0) AS total_prateleira
+                               COALESCE((SELECT SUM(quant_prod) FROM estoque    WHERE id_produto = p.id), 0) AS total_estoque,
+                               COALESCE((SELECT SUM(quant_item) FROM prateleira WHERE id_produto = p.id), 0) AS total_prateleira
                         FROM produto p
-                        LEFT JOIN estoque    e  ON e.id_produto  = p.id
-                        LEFT JOIN prateleira pr ON pr.id_produto = p.id
                         WHERE 1=1";
                 $params = [];
                 if ($busca !== '') {
@@ -38,7 +44,7 @@ try {
                     $sql .= " AND p.categoria = ?";
                     $params[] = $categoria;
                 }
-                $sql .= " GROUP BY p.id ORDER BY p.nome ASC";
+                $sql .= " ORDER BY p.nome ASC";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
                 responderJson(true, $stmt->fetchAll());

@@ -1,7 +1,16 @@
+-- ============================================================
+--  VALISTOQUE - Sistema de Controle de Estoque
+--  Script de criação do banco de dados completo
+--  Banco: MySQL 5.7+ / MariaDB 10.2+
+-- ============================================================
+
 DROP DATABASE IF EXISTS projeto_valistoque;
 CREATE DATABASE projeto_valistoque CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE projeto_valistoque;
 
+-- ------------------------------------------------------------
+--  Tabela: adm  (Administradores)
+-- ------------------------------------------------------------
 CREATE TABLE adm (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(150) NOT NULL,
@@ -15,6 +24,9 @@ CREATE TABLE adm (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: func  (Funcionários)
+-- ------------------------------------------------------------
 CREATE TABLE func (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(150) NOT NULL,
@@ -24,12 +36,15 @@ CREATE TABLE func (
     ativo TINYINT(1) NOT NULL DEFAULT 1,
     tentativas_login INT NOT NULL DEFAULT 0,
     bloqueado_ate DATETIME DEFAULT NULL,
-    id_adm_criador INT DEFAULT NULL,          
+    id_adm_criador INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (id_adm_criador) REFERENCES adm(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: produto
+-- ------------------------------------------------------------
 CREATE TABLE produto (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(200) NOT NULL,
@@ -41,9 +56,14 @@ CREATE TABLE produto (
     preco_custo DECIMAL(10,2) DEFAULT 0,
     preco_venda DECIMAL(10,2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_produto_nome (nome),
+    INDEX idx_produto_categoria (categoria)
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: estoque  (Estoque central)
+-- ------------------------------------------------------------
 CREATE TABLE estoque (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_produto INT NOT NULL,
@@ -51,9 +71,14 @@ CREATE TABLE estoque (
     quant_prod INT NOT NULL DEFAULT 0,
     validade DATE NOT NULL,
     data_entrada DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_produto) REFERENCES produto(id) ON DELETE CASCADE
+    FOREIGN KEY (id_produto) REFERENCES produto(id) ON DELETE CASCADE,
+    INDEX idx_estoque_produto (id_produto),
+    INDEX idx_estoque_validade (validade)
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: prateleira  (Estoque de prateleira / loja)
+-- ------------------------------------------------------------
 CREATE TABLE prateleira (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_produto INT NOT NULL,
@@ -62,9 +87,14 @@ CREATE TABLE prateleira (
     quant_item INT NOT NULL DEFAULT 0,
     peso_prat FLOAT NOT NULL DEFAULT 0,
     data_reposicao DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_produto) REFERENCES produto(id) ON DELETE CASCADE
+    FOREIGN KEY (id_produto) REFERENCES produto(id) ON DELETE CASCADE,
+    INDEX idx_prateleira_produto (id_produto),
+    INDEX idx_prateleira_validade (validade)
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: movimentacao  (Histórico de entradas/saídas/transf.)
+-- ------------------------------------------------------------
 CREATE TABLE movimentacao (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_produto INT NOT NULL,
@@ -76,9 +106,15 @@ CREATE TABLE movimentacao (
     perfil_usuario ENUM('adm','func') NOT NULL,
     observacao TEXT,
     data_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_produto) REFERENCES produto(id) ON DELETE CASCADE
+    FOREIGN KEY (id_produto) REFERENCES produto(id) ON DELETE CASCADE,
+    INDEX idx_mov_data (data_hora),
+    INDEX idx_mov_tipo (tipo),
+    INDEX idx_mov_produto (id_produto)
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: alertas
+-- ------------------------------------------------------------
 CREATE TABLE alertas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_produto INT,
@@ -95,9 +131,14 @@ CREATE TABLE alertas (
     data_geracao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_produto)    REFERENCES produto(id)    ON DELETE CASCADE,
     FOREIGN KEY (id_estoque)    REFERENCES estoque(id)    ON DELETE CASCADE,
-    FOREIGN KEY (id_prateleira) REFERENCES prateleira(id) ON DELETE CASCADE
+    FOREIGN KEY (id_prateleira) REFERENCES prateleira(id) ON DELETE CASCADE,
+    INDEX idx_alerta_lido (lido),
+    INDEX idx_alerta_tipo (tipo_alerta)
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: config_alertas  (Parâmetros de gatilhos)
+-- ------------------------------------------------------------
 CREATE TABLE config_alertas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     dias_val INT NOT NULL DEFAULT 15,
@@ -106,6 +147,9 @@ CREATE TABLE config_alertas (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: recuperacao_senha
+-- ------------------------------------------------------------
 CREATE TABLE recuperacao_senha (
     id INT AUTO_INCREMENT PRIMARY KEY,
     perfil ENUM('adm','func') NOT NULL,
@@ -115,9 +159,14 @@ CREATE TABLE recuperacao_senha (
     token VARCHAR(255) NOT NULL,
     usado TINYINT(1) NOT NULL DEFAULT 0,
     expira_em DATETIME NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_recup_codigo (codigo),
+    INDEX idx_recup_expira (expira_em)
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+--  Tabela: log_atividade  (Auditoria do sistema)
+-- ------------------------------------------------------------
 CREATE TABLE log_atividade (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_id INT NOT NULL,
@@ -125,27 +174,32 @@ CREATE TABLE log_atividade (
     acao VARCHAR(100) NOT NULL,
     detalhes TEXT,
     ip VARCHAR(45),
-    data_hora DATETIME DEFAULT CURRENT_TIMESTAMP
+    data_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_log_data (data_hora),
+    INDEX idx_log_acao (acao)
 ) ENGINE=InnoDB;
 
+-- ============================================================
+--  DADOS PADRÃO (SEEDS)
+-- ============================================================
 
 -- Configuração padrão de alertas
 INSERT INTO config_alertas (dias_val, quant_min_estoq, quant_min_prat)
 VALUES (15, 20, 20);
 
--- Administrador padrão  (senha: admin123)
+-- Administrador padrão  (login: admin@valistoque.com / senha: admin123)
 INSERT INTO adm (nome, Email, Senha, cpf) VALUES (
     'Administrador Master',
     'admin@valistoque.com',
-    '$2y$10$YDUtqxYqUF8DcWqM2rUE5e3CRJiTfvDxQq5R3l.JZuKqW9NN.U/de', -- admin123
+    '$2y$10$YDUtqxYqUF8DcWqM2rUE5e3CRJiTfvDxQq5R3l.JZuKqW9NN.U/de',
     '12345678910'
 );
 
--- Funcionário padrão (senha: func123)
+-- Funcionário padrão (login: funcionario@valistoque.com / senha: func123)
 INSERT INTO func (nome, Email, Senha, cpf, id_adm_criador) VALUES (
     'Funcionário Teste',
     'funcionario@valistoque.com',
-    '$2y$10$Ku0X7v8r7eZQy4kQ9oU3oO1K8qB3VuWtKHkR6sJl/5kS5pXl3JEEW', -- func123
+    '$2y$10$Ku0X7v8r7eZQy4kQ9oU3oO1K8qB3VuWtKHkR6sJl/5kS5pXl3JEEW',
     '98765432100',
     1
 );
@@ -161,12 +215,12 @@ INSERT INTO produto (nome, codigo_barras, categoria, validade, peso, lote, preco
 INSERT INTO estoque (id_produto, lote, quant_prod, validade) VALUES
 (1, 'L001', 80,  '2026-08-15'),
 (2, 'A002', 50,  '2027-06-20'),
-(3, 'I003', 15,  '2026-06-05'),   -- gera alerta de estoque baixo
-(4, 'P004', 25,  '2026-05-30');   -- validade próxima
+(3, 'I003', 15,  '2026-06-05'),
+(4, 'P004', 25,  '2026-05-30');
 
 -- Prateleira inicial
 INSERT INTO prateleira (id_produto, codigo_prateleira, validade, quant_item, peso_prat) VALUES
 (1, 'PR-A1', '2026-08-15', 30, 30.0),
-(2, 'PR-A2', '2027-06-20', 12, 60.0),   -- prateleira baixa
+(2, 'PR-A2', '2027-06-20', 12, 60.0),
 (3, 'PR-B1', '2026-06-05', 22, 3.74),
-(4, 'PR-B2', '2026-05-30', 18, 9.0);    -- prateleira baixa
+(4, 'PR-B2', '2026-05-30', 18, 9.0);

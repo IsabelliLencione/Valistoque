@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - Encerrar sessão
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
 
 if (isset($_SESSION['usuario_id'])) {
@@ -16,5 +20,5 @@ if (ini_get("session.use_cookies")) {
 }
 session_destroy();
 
-header("Location: ../../frontend/1tela.html?msg=logout");
+header("Location: ../../frontend/login.html?msg=logout");
 exit;

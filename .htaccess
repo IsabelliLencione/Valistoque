@@ -1,0 +1,21 @@
+# ============================================================
+#  VALISTOQUE - Proteção de pasta do back-end
+# ============================================================
+
+# Habilita CORS apenas para a aplicação local (ajuste em produção)
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+</IfModule>
+
+# Bloqueia acesso direto aos includes e SQL
+<FilesMatch "\.(sql|md|log)$">
+    Require all denied
+</FilesMatch>
+
+# Não listar diretórios
+Options -Indexes
+
+# Erro PHP fora do output
+php_flag display_errors off

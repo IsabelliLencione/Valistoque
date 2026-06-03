@@ -1,5 +1,11 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - API  /admin/usuarios.php
+ *  Apenas administradores. Gerencia administradores e funcionários.
+ *  Parâmetro perfil = adm | func (padrão: func)
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
 exigirLogin('adm'); // somente admin
 header('Content-Type: application/json; charset=utf-8');
@@ -39,7 +45,7 @@ try {
                 if (array_key_exists($c, $d)) { $sets[] = "$c = ?"; $params[] = $d[$c]; }
             }
             if (isset($d['nova_senha']) && strlen($d['nova_senha']) >= 6) {
-                $sets[] = "Senha = ?";
+                $sets[]   = "Senha = ?";
                 $params[] = password_hash($d['nova_senha'], PASSWORD_DEFAULT);
             }
             if (empty($sets)) responderJson(false, null, 'Nada para atualizar.', 400);

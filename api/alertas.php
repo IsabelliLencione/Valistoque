@@ -1,5 +1,14 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - API REST  /api/alertas.php
+ *  GET    -> Lista alertas (?todos=1 para incluir lidos)
+ *            ?varrer=1 força regeração; ?rota=config retorna config
+ *  POST   -> ?id=N&acao=ler  marca alerta como lido
+ *  PUT    -> ?rota=config    atualiza parâmetros (apenas admin)
+ *  DELETE -> ?id=N           exclui alerta (apenas admin)
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/alertas_check.php';
 exigirLogin();
@@ -10,13 +19,10 @@ $id     = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $acao   = $_GET['acao'] ?? null;
 
 try {
-
-    // -------- VARREDURA GERAL --------
     if ($metodo === 'GET' && !empty($_GET['varrer'])) {
         varrerTodosAlertas();
     }
 
-    // -------- ATUALIZAR CONFIG --------
     if ($metodo === 'PUT' && ($_GET['rota'] ?? '') === 'config') {
         if (!ehAdmin()) responderJson(false, null, 'Apenas admin.', 403);
         $d = json_decode(file_get_contents('php://input'), true);
@@ -35,7 +41,6 @@ try {
     switch ($metodo) {
 
         case 'GET':
-            // GET ?rota=config -> retorna config
             if (($_GET['rota'] ?? '') === 'config') {
                 responderJson(true, lerConfigAlertas());
             }
@@ -50,7 +55,6 @@ try {
             $stmt = $pdo->query($sql);
             $lista = $stmt->fetchAll();
 
-            // Resumo agrupado por tipo
             $resumo = [
                 'total'   => count($lista),
                 'validade'=> 0, 'vencido' => 0,
@@ -58,10 +62,10 @@ try {
             ];
             foreach ($lista as $a) {
                 switch ($a['tipo_alerta']) {
-                    case 'Validade Próxima':           $resumo['validade']++;   break;
-                    case 'Produto Vencido':            $resumo['vencido']++;    break;
-                    case 'Estoque Baixo Central':      $resumo['estoque']++;    break;
-                    case 'Estoque Baixo Prateleira':   $resumo['prateleira']++; break;
+                    case 'Validade Próxima':         $resumo['validade']++;   break;
+                    case 'Produto Vencido':          $resumo['vencido']++;    break;
+                    case 'Estoque Baixo Central':    $resumo['estoque']++;    break;
+                    case 'Estoque Baixo Prateleira': $resumo['prateleira']++; break;
                 }
             }
             responderJson(true, ['resumo' => $resumo, 'lista' => $lista]);

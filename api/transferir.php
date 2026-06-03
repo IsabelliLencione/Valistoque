@@ -1,5 +1,11 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - API  /api/transferir.php
+ *  POST -> Transfere quantidade do ESTOQUE para a PRATELEIRA
+ *          { id_produto, lote, quantidade, codigo_prateleira? }
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/alertas_check.php';
 exigirLogin();
@@ -44,12 +50,12 @@ try {
     $upd = $pdo->prepare("UPDATE estoque SET quant_prod = quant_prod - ? WHERE id = ?");
     $upd->execute([$qtde, $est['id']]);
 
-    // 3. Pega peso do produto para calcular peso da prateleira
+    // 3. Pega peso unitário do produto
     $qProd = $pdo->prepare("SELECT peso FROM produto WHERE id = ?");
     $qProd->execute([$idProduto]);
     $pesoUnit = (float)$qProd->fetchColumn();
 
-    // 4. Procura prateleira já existente desse produto
+    // 4. Procura prateleira já existente com mesma validade
     $busca = $pdo->prepare("SELECT id, quant_item, peso_prat FROM prateleira
                             WHERE id_produto = ? AND validade = ?
                             LIMIT 1");

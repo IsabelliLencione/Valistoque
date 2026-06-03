@@ -1,5 +1,15 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - API  /api/relatorios.php
+ *  Gera relatórios em JSON ou CSV (download para Excel).
+ *  Parâmetros (GET):
+ *    tipo     = estoque | prateleira | movimentacao | alertas | validade
+ *    formato  = json (padrão) | csv
+ *    inicio   = YYYY-MM-DD  (opcional, p/ movimentação)
+ *    fim      = YYYY-MM-DD  (opcional, p/ movimentação)
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
 exigirLogin();
 
@@ -84,7 +94,7 @@ try {
         header('Content-Type: text/csv; charset=utf-8');
         header("Content-Disposition: attachment; filename=\"{$nomeArq}\"");
         $out = fopen('php://output', 'w');
-        // BOM UTF-8 para Excel
+        // BOM UTF-8 para Excel reconhecer acentos
         fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
         fputcsv($out, $cols, ';');
         foreach ($dados as $linha) fputcsv($out, $linha, ';');
@@ -93,10 +103,10 @@ try {
     }
 
     responderJson(true, [
-        'titulo'  => $titulo,
-        'colunas' => $cols,
-        'linhas'  => $dados,
-        'total'   => count($dados),
+        'titulo'    => $titulo,
+        'colunas'   => $cols,
+        'linhas'    => $dados,
+        'total'     => count($dados),
         'gerado_em' => date('d/m/Y H:i:s'),
     ]);
 

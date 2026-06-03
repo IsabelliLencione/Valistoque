@@ -1,7 +1,15 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - API REST  /api/estoque.php
+ *  GET    -> listar / consultar estoque central
+ *  POST   -> registrar entrada de estoque (acumula no lote)
+ *  PUT    -> atualizar lote (?id=N)
+ *  DELETE -> excluir registro (?id=N — apenas admin)
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
-require_once __DIR__ . '/alertas_check.php';   // helper para gerar alertas
+require_once __DIR__ . '/alertas_check.php';
 exigirLogin();
 header('Content-Type: application/json; charset=utf-8');
 
@@ -44,7 +52,7 @@ try {
                 if (!isset($d[$c])) responderJson(false, null, "Campo '{$c}' obrigatório.", 400);
             }
 
-            // Verifica se já existe esse lote no estoque -> soma quantidade
+            // Se já existe esse lote, soma a quantidade
             $check = $pdo->prepare("SELECT id, quant_prod FROM estoque
                                     WHERE id_produto = ? AND lote = ? LIMIT 1");
             $check->execute([(int)$d['id_produto'], $d['lote']]);
@@ -67,7 +75,7 @@ try {
                 $idGravado = $pdo->lastInsertId();
             }
 
-            // Registra movimentação
+            // Registra movimentação de entrada
             $mv = $pdo->prepare("INSERT INTO movimentacao
                 (id_produto, tipo, origem, destino, quantidade, id_usuario, perfil_usuario, observacao)
                 VALUES (?, 'entrada', 'externo', 'estoque', ?, ?, ?, ?)");
@@ -80,7 +88,6 @@ try {
             registrarLog('ESTOQUE_ENTRADA',
                 "Produto {$d['id_produto']} | Qtd {$d['quant_prod']} | Lote {$d['lote']}");
 
-            // Atualiza alertas
             verificarAlertasProduto((int)$d['id_produto']);
             responderJson(true, ['id' => (int)$idGravado], 'Entrada registrada!', 201);
             break;
@@ -97,7 +104,7 @@ try {
             $stmt = $pdo->prepare("UPDATE estoque SET " . implode(', ', $sets) . " WHERE id = ?");
             $stmt->execute($params);
 
-            // Identifica produto p/ checar alerta
+            // Recalcula alertas do produto envolvido
             $q = $pdo->prepare("SELECT id_produto FROM estoque WHERE id = ?");
             $q->execute([$id]);
             $idProd = $q->fetchColumn();

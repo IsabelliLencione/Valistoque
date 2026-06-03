@@ -1,5 +1,11 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - Redefinição efetiva da senha
+ *  Recebe POST: codigo, nova_senha, confirmar_senha
+ *  (precisa de sessão de recuperação ativa)
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -10,15 +16,9 @@ $codigo    = trim($_POST['codigo'] ?? '');
 $senha     = $_POST['nova_senha'] ?? '';
 $confirmar = $_POST['confirmar_senha'] ?? '';
 
-if (!preg_match('/^\d{6}$/', $codigo)) {
-    alertaJs('Código inválido (6 dígitos).');
-}
-if (strlen($senha) < 6) {
-    alertaJs('A nova senha deve ter no mínimo 6 caracteres.');
-}
-if ($senha !== $confirmar) {
-    alertaJs('As senhas não conferem.');
-}
+if (!preg_match('/^\d{6}$/', $codigo)) alertaJs('Código inválido (6 dígitos).');
+if (strlen($senha) < 6)                alertaJs('A nova senha deve ter no mínimo 6 caracteres.');
+if ($senha !== $confirmar)             alertaJs('As senhas não conferem.');
 
 $email  = $_SESSION['recup_email']  ?? null;
 $perfil = $_SESSION['recup_perfil'] ?? null;
@@ -35,9 +35,7 @@ try {
     $stmt->execute([$codigo, $email, $perfil]);
     $rec = $stmt->fetch();
 
-    if (!$rec) {
-        alertaJs('Código inválido ou expirado!');
-    }
+    if (!$rec) alertaJs('Código inválido ou expirado!');
 
     $tabela = ($perfil === 'adm') ? 'adm' : 'func';
     $hash   = password_hash($senha, PASSWORD_DEFAULT);
@@ -52,13 +50,12 @@ try {
     $upd2->execute([$rec['id']]);
     $pdo->commit();
 
-    // Limpa sessão de recuperação
+    // Limpa dados de recuperação
     unset($_SESSION['recup_token'], $_SESSION['recup_email'], $_SESSION['recup_perfil']);
 
-    $tela = ($perfil === 'adm') ? '2tela_admin.html' : '2tela_func.html';
     echo "<script>
         alert('Senha redefinida com sucesso! Faça login com a nova senha.');
-        window.location.href = '../../frontend/{$tela}';
+        window.location.href = '../../frontend/login.html';
     </script>";
     exit;
 

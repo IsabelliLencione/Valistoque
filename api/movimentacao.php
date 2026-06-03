@@ -2,12 +2,10 @@
 /**
  * ============================================================
  *  VALISTOQUE - API REST  /api/movimentacao.php
- * ============================================================
- *  GET  -> histórico de entradas/saídas/transferências.
- *  Filtros: ?id_produto, ?tipo, ?inicio (YYYY-MM-DD), ?fim
- *
- *  POST -> registra saída manual (ex.: venda, perda, descarte)
- *          { id_produto, origem, quantidade, observacao }
+ *  GET  -> histórico de entradas/saídas/transferências
+ *          Filtros: ?id_produto, ?tipo, ?inicio (YYYY-MM-DD), ?fim
+ *  POST -> registra saída manual (venda, perda, descarte)
+ *          { id_produto, origem (estoque|prateleira), quantidade, observacao }
  * ============================================================
  */
 require_once __DIR__ . '/../includes/config.php';
@@ -60,7 +58,7 @@ try {
             $pdo->beginTransaction();
 
             if ($d['origem'] === 'estoque') {
-                // Tira do estoque (FIFO por validade)
+                // FIFO por validade
                 $busca = $pdo->prepare("SELECT * FROM estoque
                                         WHERE id_produto = ? AND quant_prod > 0
                                         ORDER BY validade ASC FOR UPDATE");

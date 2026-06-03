@@ -1,26 +1,37 @@
 <?php
-
+/**
+ * ============================================================
+ *  VALISTOQUE - API  /api/dashboard.php
+ *  Retorna KPIs gerais, gráficos e listas resumidas para a
+ *  tela inicial do sistema.
+ * ============================================================
+ */
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/alertas_check.php';
 exigirLogin();
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    varrerTodosAlertas(); // garante que alertas estão atualizados
+    varrerTodosAlertas(); // garante alertas atualizados
 
     // 1. KPIs gerais
-    $totalProdutos    = (int)$pdo->query("SELECT COUNT(*) FROM produto")->fetchColumn();
-    $totalEstoque     = (int)$pdo->query("SELECT COALESCE(SUM(quant_prod),0) FROM estoque")->fetchColumn();
-    $totalPrateleira  = (int)$pdo->query("SELECT COALESCE(SUM(quant_item),0) FROM prateleira")->fetchColumn();
-    $totalAlertas     = (int)$pdo->query("SELECT COUNT(*) FROM alertas WHERE lido = 0")->fetchColumn();
-    $valorEstoque     = (float)$pdo->query("
-        SELECT COALESCE(SUM((e.quant_prod + IFNULL(pr.q,0)) * p.preco_custo),0)
-        FROM produto p
-        LEFT JOIN estoque e ON e.id_produto = p.id
-        LEFT JOIN (SELECT id_produto, SUM(quant_item) q FROM prateleira GROUP BY id_produto) pr
-              ON pr.id_produto = p.id")->fetchColumn();
+    $totalProdutos   = (int)$pdo->query("SELECT COUNT(*) FROM produto")->fetchColumn();
+    $totalEstoque    = (int)$pdo->query("SELECT COALESCE(SUM(quant_prod),0) FROM estoque")->fetchColumn();
+    $totalPrateleira = (int)$pdo->query("SELECT COALESCE(SUM(quant_item),0) FROM prateleira")->fetchColumn();
+    $totalAlertas    = (int)$pdo->query("SELECT COUNT(*) FROM alertas WHERE lido = 0")->fetchColumn();
 
-    // 2. Validades próximas (15 dias)
+    // Valor total do estoque (sem JOIN duplicado)
+    $valorEstoque = (float)$pdo->query("
+        SELECT COALESCE(SUM(total.qt * p.preco_custo),0)
+        FROM produto p
+        LEFT JOIN (
+            SELECT id_produto, SUM(quant_prod) AS qt FROM estoque    GROUP BY id_produto
+            UNION ALL
+            SELECT id_produto, SUM(quant_item) AS qt FROM prateleira GROUP BY id_produto
+        ) total ON total.id_produto = p.id
+    ")->fetchColumn();
+
+    // 2. Validades próximas
     $cfg  = lerConfigAlertas();
     $dias = (int)$cfg['dias_val'];
     $valProx = $pdo->prepare("
@@ -51,7 +62,7 @@ try {
         LEFT JOIN produto p ON p.id = m.id_produto
         ORDER BY m.data_hora DESC LIMIT 10")->fetchAll();
 
-    // 5. Gráfico — entradas x saídas nos últimos 30 dias
+    // 5. Gráfico — entradas x saídas (últimos 30 dias)
     $grafico = $pdo->query("
         SELECT DATE(data_hora) AS dia,
                SUM(CASE WHEN tipo = 'entrada' THEN quantidade ELSE 0 END) AS entradas,
@@ -67,7 +78,7 @@ try {
         FROM alertas WHERE lido = 0
         GROUP BY tipo_alerta")->fetchAll();
 
-    // 7. Produtos mais movimentados (último mês)
+    // 7. Produtos mais movimentados
     $maisMov = $pdo->query("
         SELECT p.nome, SUM(m.quantidade) AS total
         FROM movimentacao m
@@ -84,13 +95,13 @@ try {
             'total_alertas'    => $totalAlertas,
             'valor_estoque'    => round($valorEstoque, 2),
         ],
-        'validade_proxima'   => $validade_proxima,
-        'estoque_baixo'      => $estoque_baixo,
+        'validade_proxima'      => $validade_proxima,
+        'estoque_baixo'         => $estoque_baixo,
         'ultimas_movimentacoes' => $movs,
-        'grafico_30dias'     => $grafico,
-        'resumo_alertas'     => $alertResumo,
-        'mais_movimentados'  => $maisMov,
-        'usuario'            => [
+        'grafico_30dias'        => $grafico,
+        'resumo_alertas'        => $alertResumo,
+        'mais_movimentados'     => $maisMov,
+        'usuario'               => [
             'nome'   => $_SESSION['usuario_nome']  ?? '',
             'perfil' => $_SESSION['perfil']        ?? '',
             'email'  => $_SESSION['usuario_email'] ?? '',

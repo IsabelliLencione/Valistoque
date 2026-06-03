@@ -329,6 +329,34 @@
             .cards-grid { grid-template-columns: 1fr; }
         }
 
+               /*Parte de selecionar adm ou funcionario*/
+        fieldset {
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+        legend {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #333;
+            font-family: sans-serif;
+         }
+
+        .tipoAdm, .tipoFunc {
+            display: inline-flex; 
+            align-items: center;  
+            margin-right: 20px;   
+            font-family: sans-serif;
+            cursor: pointer;
+        }
+
+        input[type="radio"] {
+            margin-right: 6px;
+            cursor: pointer;
+        }
+
+
     </style> 
 </head> 
 <body> 
@@ -341,7 +369,7 @@
             <li><a onclick="Prateleira()">Prateleiras</a></li> 
             <li><a onclick="Estoque()">Estoque Central</a></li> 
             <li><a onclick="Alertas()">Alertas</a></li> 
-             <li style="margin-top: auto; border-top: 1px solid #34495e;"><a onclick="perfil()">Perfil</a></li> 
+             <li style="margin-top: auto; border-top: 1px solid #34495e;"><a onclick="Perfil()">Perfil</a></li> 
         </ul> 
     </nav> 
     <main> 
@@ -482,7 +510,7 @@
             <form action="/buscar" method="get" class="form-busca-prateleira" onsubmit="return false;"> 
                 <div> 
                     <label for="prateleira">Prateleira</label> 
-                    <input type="search" name="prateleira" id="prateleira" placeholder="Procure a prateleira..."> 
+                    <input type="text" id="prateleiraBusca" placeholder="Buscar prateleira, produto ou lote..."> 
                 </div> 
             </form>
 
@@ -742,29 +770,44 @@
             });
         }
 
-        // Atualiza visualmente a aba de prateleiras com os dados do array
-        function renderizarCardsPrateleiras() {
+       // Atualiza visualmente a aba de prateleiras com os dados do array
+        function renderizarCardsPrateleiras(lista = alocacoesPrateleiras) {
             const container = document.querySelector('.prateleiras-container');
+
+            if (!container) return;
+
             container.innerHTML = '';
 
-            alocacoesPrateleiras.forEach(prat => {
-                const cardPrat = document.createElement('div');
-                cardPrat.className = 'prateleira-card-horizontal';
-                cardPrat.id = prat.id;
+            lista.forEach(prat => {
+            const cardPrat = document.createElement('div');
+            cardPrat.className = 'prateleira-card-horizontal';
+            cardPrat.id = prat.id;
 
-                cardPrat.innerHTML = `
-                    <div class="prat-numero">Prateleira ${prat.numero}</div>
-                    <div class="prat-detalhes">
-                        <h4>${prat.nome}</h4>
-                        <p><strong>Alocado:</strong> ${prat.unidades} unidades</p>
-                        <p><strong>Validade:</strong> ${prat.validade} (Lote: ${prat.lote})</p>
-                    </div>
-                    <button class="btn-remover-prat" onclick="excluirPrateleira('${prat.id}')">X</button>
-                `;
-                container.appendChild(cardPrat);
-            });
+            cardPrat.innerHTML = `
+                <div class="prat-numero">Prateleira ${prat.numero}</div>
+                <div class="prat-detalhes">
+                    <h4>${prat.nome}</h4>
+                    <p><strong>Alocado:</strong> ${prat.unidades} unidades</p>
+                    <p><strong>Validade:</strong> ${prat.validade}</p>
+                    <p><strong>Lote:</strong> ${prat.lote}</p>
+                </div>
+                <button class="btn-remover-prat"
+                        onclick="excluirPrateleira('${prat.id}')">
+                    X
+                </button>
+            `;
+
+            container.appendChild(cardPrat);
+        });
+
+        if (lista.length === 0) {
+            container.innerHTML = `
+                <div class="sem-resultados">
+                    Nenhuma prateleira encontrada.
+                </div>
+            `;
         }
-
+    }
         // Processamento de dados do cadastro de produto
         document.querySelector('.produto').addEventListener('submit', function(event) { 
             event.preventDefault(); 
@@ -945,7 +988,7 @@
         function Estoque() { esconderTodasSecoes(); document.getElementById('secao-estoque').style.display = 'block'; } 
         
         function Alertas(){ esconderTodasSecoes(); document.getElementById('secao-alertas').style.display = 'block'; } 
-        function perfil(){ esconderTodasSecoes(); document.getElementById('secao-perfil').style.display = 'block'; }
+        function Perfil(){ esconderTodasSecoes(); document.getElementById('secao-perfil').style.display = 'block'; }
 
 
 
@@ -1266,6 +1309,46 @@
             // Aqui você pode adicionar a lógica para enviar os dados para o seu servidor
         }
 
+
+        //Parte de input para buscar as prateleiras usando o .filtro()
+        document.addEventListener('DOMContentLoaded', () => {
+        const inputBusca = document.getElementById('prateleiraBusca');
+
+        if (inputBusca) {
+            inputBusca.addEventListener('input', handleBuscaPrateleira);
+        }
+        });
+
+        function handleBuscaPrateleira() {
+        const inputBusca = document.getElementById('prateleiraBusca');
+
+        let termo = inputBusca.value
+            .toLowerCase()
+            .trim();
+
+        if (termo === '') {
+            renderizarCardsPrateleiras();
+            return;
+        }
+
+        termo = termo.replace('prateleira', '').trim();
+
+        const listaFiltrada = alocacoesPrateleiras.filter(prateleira => {
+
+        const numero = String(prateleira.numero).toLowerCase();
+        const nome = String(prateleira.nome || '').toLowerCase();
+        const lote = String(prateleira.lote || '').toLowerCase();
+
+        return (
+            numero.includes(termo) ||
+            nome.includes(termo) ||
+            lote.includes(termo)
+        );
+        });
+
+        renderizarCardsPrateleiras(listaFiltrada);
+    }
+        
 
 
     </script> 

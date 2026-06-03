@@ -119,7 +119,9 @@
             line-height: 1.6; 
         }
 
-        .card-buttons { display: flex; gap: 15px; justify-content: center; }
+        .card-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+
+        .card-buttons a { text-decoration: none; }
 
         .btn-primary, .btn-primary2 {
             padding: 1rem 2.5rem;
@@ -242,7 +244,10 @@
         <p>Gerencie produtos, acompanhe validades e tome decisões baseadas em dados reais com a plataforma Valistoque.</p>
         <div class="card-buttons">
             <a href="login.html">
-            <button class="btn-primary">Começar agora &rarr;</button>
+                <button class="btn-primary">Entrar no sistema &rarr;</button>
+            </a>
+            <a href="recuperasenha.html">
+                <button class="btn-primary2">Recuperar senha</button>
             </a>
         </div>
     </main>

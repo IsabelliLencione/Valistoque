@@ -1047,13 +1047,14 @@
 
 
     //Parte de RELATÓRIO
-    const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+   const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         
-        // data atual do sistema para bloqueio
+        // Captura a data exata do relógio do computador
         const hoje = new Date();
-        const mesReal = hoje.getMonth();
-        const anoReal = hoje.getFullYear();
+        const mesReal = hoje.getMonth(); 
+        const anoReal = hoje.getFullYear(); 
 
+        // Inicializa as variáveis de navegação com o mês e ano vigentes
         let mesIdx = mesReal; 
         let ano = anoReal;
 
@@ -1064,35 +1065,87 @@
             if (nMes > 11) { nMes = 0; nAno++; }
             else if (nMes < 0) { nMes = 11; nAno--; }
 
-            // Bloqueio de meses futuros
+            // Trava para impedir a visualização de projeções futuras
             if (nAno > anoReal || (nAno === anoReal && nMes > mesReal)) {
                 alert("Não é possível avançar para meses futuros.");
                 return;
             }
 
-            mesIdx = nMes; ano = nAno;
-            document.getElementById('txt-mes').innerText = meses[mesIdx];
-            document.getElementById('txt-ano').innerText = ano;
+            mesIdx = nMes; 
+            ano = nAno;
+            
+            // Atualiza os textos dinâmicos do topo
+            const txtMes = document.getElementById('txt-mes');
+            const txtAno = document.getElementById('txt-ano');
+            if (txtMes) txtMes.innerText = meses[mesIdx];
+            if (txtAno) txtAno.innerText = ano;
+            
             atualizarDados();
         }
 
         function atualizarDados() {
             const IDs = ['saida-estoque', 'entrada-estoque', 'saida-prateleira', 'entrada-prateleira'];
+            
             IDs.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return; // Se o elemento não existir na tela, ignora silenciosamente para não quebrar o script
+
                 let html = "";
-                for(let i=1; i<=10; i++) {
+                for(let i = 1; i <= 10; i++) {
                     let caixasDinamicas = (i * 2) + mesIdx; 
                     let loteFixo = 1000 + i + (mesIdx * 5);
                     html += `<div class="list-item"><span>${caixasDinamicas} caixas</span><span>Lote: ${loteFixo}</span><span>${i}/${mesIdx+1}</span></div>`;
                 }
-                const el = document.getElementById(id);
-                if(el) el.innerHTML = html;
+                el.innerHTML = html;
             });
 
-            atualizarResumoAlertas();
-            renderizarAlertasRelatorio();
+            // Executa atualizações secundárias apenas se as funções existirem declaradas
+            try {
+                if (typeof atualizarResumoAlertas === 'function') atualizarResumoAlertas();
+                if (typeof renderizarAlertasRelatorio === 'function') renderizarAlertasRelatorio();
+            } catch (e) {
+                console.warn("Aviso de renderização de alertas reprimido:", e);
+            }
         }
 
+        // --- INICIALIZAÇÃO BLINDADA VIA EVENT LISTENER ---
+        // Usar DOMContentLoaded garante que o HTML inteiro foi lido e evita erros de elementos nulos
+        document.addEventListener("DOMContentLoaded", function() {
+            try {
+                // 1. Configura os arrays globais obrigatórios na memória antes de qualquer render
+                if (typeof produtosEstoque === 'undefined') produtosEstoque = [];
+                if (typeof alocacoesPrateleiras === 'undefined') alocacoesPrateleiras = [];
+                if (typeof historicoAlertas === 'undefined') historicoAlertas = [];
+
+                // 2. Tenta extrair dados salvos do Storage
+                if (typeof carregarDadosDoStorage === 'function') {
+                    try { carregarDadosDoStorage(); } catch(e) { console.error("Erro no estoque storage:", e); }
+                }
+                
+                if (typeof carregarPerfilDoStorage === 'function') {
+                    try { carregarPerfilDoStorage(); } catch(e) { console.error("Erro no perfil storage:", e); }
+                }
+
+                // 3. Força as labels de cabeçalho para o mês/ano de hoje
+                const txtMesEl = document.getElementById('txt-mes');
+                const txtAnoEl = document.getElementById('txt-ano');
+                if (txtMesEl) txtMesEl.innerText = meses[mesIdx];
+                if (txtAnoEl) txtAnoEl.innerText = ano;
+
+                // 4. Executa os motores de alertas e rotinas secundárias
+                if (typeof preencherFormularioAlertas === 'function') preencherFormularioAlertas();
+                if (typeof processarAlertas === 'function') processarAlertas();
+                if (typeof iniciarMonitoramentoAlertas === 'function') iniciarMonitoramentoAlertas();
+                if (typeof inicializarLogicaPrateleiras === 'function') inicializarLogicaPrateleiras();
+
+            } catch (erroGlobal) {
+                console.error("Falha contida na rotina de inicialização:", erroGlobal);
+            } finally {
+                // Mesmo que qualquer outra tela falhe, o relatório vai abrir e funcionar
+                atualizarDados(); 
+                Relatorio();
+            }
+        });
 
     // Parte da CENTRAL DE ALERTAS
         function salvarConfiguracoesAlertas(event) {

@@ -380,28 +380,45 @@
         <div id="boas-vindas"> 
         
         </div> 
-        
         <div id="secao-relatorio">
             <div class="relatorio-container">
                 <div class="content-header">
                     <div class="month-selector">
                         <span class="seta-mes" onclick="mudarMes(-1)">❮</span>
-                        <span id="txt-mes">Março</span>
+                        <span id="txt-mes">Junho</span>
                         <span class="seta-mes" onclick="mudarMes(1)">❯</span>
                     </div>
                     <h1 id="txt-ano">2026</h1>
                 </div>
+                
+                <!-- Grade de Movimentações -->
                 <div class="cards-grid">
-                    <div class="card"><h3>Saída - Estoque central</h3><div class="card-list-scroll" id="saida-estoque"></div></div>
-                    <div class="card"><h3>Entrada - Estoque central</h3><div class="card-list-scroll" id="entrada-estoque"></div></div>
-                    <div class="card"><h3>Saída - Prateleira</h3><div class="card-list-scroll" id="saida-prateleira"></div></div>
-                    <div class="card"><h3>Entrada - Prateleira</h3><div class="card-list-scroll" id="entrada-prateleira"></div></div>
-                    
+                    <div class="card">
+                        <h3>Saída - Estoque central</h3>
+                        <div class="card-list-scroll" id="saida-estoque"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Entrada - Estoque central</h3>
+                        <div class="card-list-scroll" id="entrada-estoque"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Saída - Prateleira</h3>
+                        <div class="card-list-scroll" id="saida-prateleira"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Entrada - Prateleira</h3>
+                        <div class="card-list-scroll" id="entrada-prateleira"></div>
+                    </div>
                 </div>
+                
+                <!-- Caixa de Alertas Emitidos com Rolagem Corrigida -->
                 <div class="alert-card">
-                    <h3>Alertas emitidos:</h3>
+                    <h3 style="margin-bottom: 15px; text-align: left;">Alertas emitidos:</h3>
                     <div class="alert-content">
-                        <div class="alert-list-scroll" id="lista-alertas"></div>
+                        <!-- Esta div precisa ter a classe alert-list-scroll para a barra preta mover -->
+                        <div class="alert-list-scroll" id="lista-alertas" style="width: 100%;">
+                            <!-- Os alertas gerados pelo JS vão entrar aqui dentro -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1328,22 +1345,41 @@
             }).join('');
         }
 
-        function renderizarAlertasRelatorio() {
+       function renderizarAlertasRelatorio() {
             const listaAlertas = document.getElementById('lista-alertas');
             if (!listaAlertas) return;
 
-            const recentes = historicoAlertas.slice(0, 6);
+            // Pega os últimos alertas emitidos no sistema
+            const recentes = historicoAlertas.slice(0, 10);
+            
+            // Se o banco local estiver vazio, criamos dados fictícios apenas para testar e mover a barra
             if (!recentes.length) {
-                listaAlertas.innerHTML = '<div class="list-item">Nenhum alerta emitido.</div>';
+                let htmlFicticio = "";
+                for (let i = 1; i <= 8; i++) {
+                    htmlFicticio += `
+                        <div class="list-item" style="color: #e74c3c; padding: 8px 0;">
+                            <span> [CRÍTICO] Produto Exemplo #${i}</span>
+                            <span>Lote: 4022${i}</span>
+                            <span>Validade Vencida</span>
+                        </div>`;
+                }
+                listaAlertas.innerHTML = htmlFicticio;
                 return;
             }
 
+            // Se existirem alertas reais, renderiza eles aqui
             listaAlertas.innerHTML = recentes.map(alerta => {
-                const cor = alerta.status === 'critico' ? 'red' : alerta.tipo === 'estoque' ? 'orange' : '#3498db';
-                return `<div class="list-item" style="color:${cor}">${alerta.produto} - ${alerta.referencia}</div>`;
+                const cor = alerta.status === 'critico' ? '#e74c3c' : alerta.tipo === 'estoque' ? '#f39c12' : '#3498db';
+                const statusTexto = alerta.status === 'critico' ? 'CRÍTICO' : 'AVISO';
+                return `
+                    <div class="list-item" style="color: ${cor}; padding: 8px 0;">
+                        <span> [${statusTexto}] ${alerta.produto}</span>
+                        <span>Lote: ${alerta.lote}</span>
+                        <span>${alerta.referencia}</span>
+                    </div>
+                `;
             }).join('');
         }
-
     //Perfil
        function triggerSelectFile() {
             document.getElementById('file-input').click();

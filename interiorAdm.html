@@ -119,29 +119,33 @@
 
 
         /*Perfil*/
-          
-           body #secao-perfil {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            display: none;
-            padding: 20px;
+         /* --- AJUSTE DE CENTRALIZAÇÃO DO PERFIL --- */
+        #secao-perfil {
+            display: none; /* Controlado pelo seu JavaScript de alternar abas */
+            width: 100%;
         }
 
-        .container {
-            background-color: #e9ecef;
+        #secao-perfil .container {
+            background-color: #e9ecef; /* O fundo cinza claro/branco do quadrado */
             width: 100%;
-            max-width: 1024px;
+            max-width: 2000px;        /* Limita a largura máxima igual aos outros formulários */
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            
+            /* Centraliza horizontalmente dentro do <main> */
+            margin: 0 auto;          
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Topo alinhado lado a lado */
-        .profile-header {
+        /* Alinhamento dos botões para preencher o container de forma elegante */
+        #secao-perfil .button-group {
             display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 30px;
+            width: 100%;
         }
 
         h2 {

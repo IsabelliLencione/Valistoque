@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tela 2 funcionario</title>
+    <title>Recuperar senha - Valistoque</title>
      <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 <style>
         @import url('https://fonts.googleapis.com/css2?family=Rationale&display=swap');
@@ -140,9 +140,9 @@
      <h1 class= "nome">Valis<span class="cor-diferente">to</span>que</h1>
     </div>
     <main class="recuperar">
-        <form action="">
+        <form id="recovery-form">
 
-    <a href="javascript:history.back()" class="voltar">&larr; Voltar para seleção</a>
+    <a href="login.html" class="voltar">&larr; Voltar para o login</a>
             <h1>Recuperar senha</h1>
             
             <div class="recupera-box">
@@ -155,9 +155,7 @@
                     <i class='bx bxs-id-card'></i>
                 </div>
 
-            <a href="codigo.html">
-                <button type="submit" class="botao">Confirmar</button>
-            </a>
+            <button type="submit" class="botao">Enviar recuperação</button>
             <p class="baixo">
               &copy; 2026 Valistoque. Todos os direitos reservados.
             </p>
@@ -166,19 +164,25 @@
 
     <script>
         const inputCpf = document.getElementById('cpf');
+        const recoveryForm = document.getElementById('recovery-form');
 
         inputCpf.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, ""); // Remove tudo que não é número
-            
-            if (value.length > 11) value = value.slice(0, 11); // Limita a 11 números
-
-            // Aplica a formatação
-            value = value.replace(/(\+d{3})(\d)/, "$1.$2");
-            value = value.replace(/^(\d{3})(\d)/, "$1.$2");
-            value = value.replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
-            value = value.replace(/\.(\d{3})(\d)/, ".$1-$2");
-
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            value = value.replace(/^(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
+            value = value.replace(/\.(\d{3})(\d)/, '.$1-$2');
             e.target.value = value;
+        });
+
+        recoveryForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const email = recoveryForm.querySelector('input[type="email"]').value.trim();
+            if (email) {
+                localStorage.setItem('valistoque_recuperacao_email', email);
+            }
+            alert('Solicitação de recuperação enviada. Você será redirecionado para o login.');
+            window.location.href = 'login.html';
         });
     </script>
 </body>

@@ -664,6 +664,12 @@
                 <input type="email" id="user-email" class="input-field" value="admin@valistoque.com" required>
             </div>
 
+            <!-- Campo Senha -->
+            <div class="info-group">
+                <label class="label" for="user-password">Senha:</label>
+                 <input type="password" id="user-password" class="input-field" placeholder="Digite sua senha" required>
+            </div>
+
             <!-- Campo Tipo de Conta (Apenas Leitura para segurança) -->
             <div class="info-group">
                 <span class="label">Tipo de conta:</span>
@@ -674,9 +680,21 @@
 
             <!-- Botões organizados -->
             <div class="button-group">
-                <button type="submit" class="btn-save">Salvar Alterações</button>
-                <a href="Principal.html" class="btn-exit">Sair para a tela principal</a>
+                 <button type="submit" class="btn-save">
+                    Salvar Alterações
+                 </button>
+
+                 <button type="button"
+                    class="btn-excluir"
+                     onclick="excluirPerfil()">
+                    Excluir Perfil
+             </button>
+
+             <a href="Principal.html" class="btn-exit">
+             Sair para a tela principal
+            </a>
             </div>
+
         </form>
     </div>
 
@@ -704,6 +722,7 @@
             iniciarMonitoramentoAlertas();
             abrirSecaoPelaHash(); 
             inicializarLogicaPrateleiras();
+            carregarPerfil();
         }; 
 
         // Salva e renderiza a lista de produtos no localStorage
@@ -1042,21 +1061,39 @@
         const funcionarios = [];
 
             function salvarUsuario(e) {
-                e.preventDefault();
-                const nome = document.getElementById('nome-usuario').value;
-                const email = document.getElementById('email-usuario').value;
-                const tipoSelecionado = document.querySelector('input[name="tipo-usuario"]:checked').value;
-    
-    
-                if (tipoSelecionado === 'administrador') {
-                    administradores.push({ nome, email });
-                    renderizarAdministradores();
-                } else {
-                    funcionarios.push({ nome, email });
-                    renderizarFuncionarios();
-                }
-                    e.target.reset();
-            }
+    e.preventDefault();
+
+    const nome = document.getElementById('nome-usuario').value;
+    const email = document.getElementById('email-usuario').value;
+    const senha = document.getElementById('senha').value;
+
+    const tipoSelecionado =
+        document.querySelector('input[name="tipo-usuario"]:checked').value;
+
+    const usuario = {
+        nome,
+        email,
+        senha
+    };
+
+    if (tipoSelecionado === 'administrador') {
+        administradores.push(usuario);
+        renderizarAdministradores();
+    } else {
+        funcionarios.push(usuario);
+        renderizarFuncionarios();
+    }
+
+    localStorage.setItem(
+        'usuariosSistema',
+        JSON.stringify({
+            administradores,
+            funcionarios
+        })
+    );
+
+    e.target.reset();
+}
 
         function renderizarAdministradores() {
             const tbody = document.querySelector('#tabela-administradores tbody');
@@ -1378,11 +1415,35 @@
             }
         }
 
-        function saveProfile(event) {
-            event.preventDefault();
-            alert("Alterações salvas com sucesso!");
-            // Aqui você pode adicionar a lógica para enviar os dados para o seu servidor
-        }
+       function saveProfile(event) {
+    event.preventDefault();
+
+    const nome =
+        document.getElementById('user-name').value;
+
+    const email =
+        document.getElementById('user-email').value;
+
+    const senha =
+        document.getElementById('user-password').value;
+
+    const perfilAtual = {
+        nome,
+        email,
+        senha,
+        perfil:
+            document.getElementById('badge-perfil')
+            .innerText
+            .toLowerCase()
+    };
+
+    localStorage.setItem(
+        'perfilUsuario',
+        JSON.stringify(perfilAtual)
+    );
+
+    alert("Perfil atualizado com sucesso!");
+}
 
 
         //Parte de input para buscar as prateleiras usando o .filtro()
@@ -1424,7 +1485,41 @@
         renderizarCardsPrateleiras(listaFiltrada);
     }
         
+    function carregarPerfil() {
 
+    const perfil =
+        JSON.parse(
+            localStorage.getItem('perfilUsuario')
+        );
+
+    if (!perfil) return;
+
+    document.getElementById('user-name').value =
+        perfil.nome || '';
+
+    document.getElementById('user-email').value =
+        perfil.email || '';
+
+    document.getElementById('user-password').value =
+        perfil.senha || '';
+}
+
+function excluirPerfil() {
+
+    const confirmar = confirm(
+        "Tem certeza que deseja excluir este perfil?"
+    );
+
+    if (!confirmar) return;
+
+    localStorage.removeItem('perfilUsuario');
+
+    document.getElementById('user-name').value = '';
+    document.getElementById('user-email').value = '';
+    document.getElementById('user-password').value = '';
+
+    alert("Perfil excluído com sucesso.");
+}
 
     </script> 
 </body> 

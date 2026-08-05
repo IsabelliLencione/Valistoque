@@ -373,7 +373,7 @@
             <li><a href="#prateleira" onclick="Prateleira(event)">Prateleiras</a></li> 
             <li><a href="#estoque" onclick="Estoque(event)">Estoque Central</a></li> 
             <li><a href="#alertas" onclick="Alertas(event)">Alertas</a></li> 
-             <li style="margin-top: auto; border-top: 1px solid #34495e;"><a href="#perfil" onclick="Perfil(event)">Perfil</a></li> 
+            <li style="margin-top: auto; border-top: 1px solid #34495e;"><a href="#perfil" onclick="Perfil(event)">Perfil</a></li> 
         </ul> 
     </nav> 
     <main> 
@@ -544,7 +544,7 @@
                     <form id="form-prateleira" onsubmit="return false;">
                         <div>
                             <label for="num-prateleira">Selecione a Prateleira</label>
-                            <select id="num-prateleira" required></select>
+                            <select id="num-prateleira required></select>
                         </div>
                         <div>
                             <label for="lote-prat">Lote do Produto</label>
@@ -634,43 +634,37 @@
         </div>
 
 
-        <!--SECÃO PERFIL-->
-        <div id="secao-perfil">
-                 <div class="container">
-        
-        <!-- Topo: Foto ao lado da escrita -->
+<!-- SECÇÃO PERFIL (BLOCO COMPLETO E UNIFICADO) -->
+<div id="secao-perfil">
+    <div class="container">
+
+        <!-- Topo: Foto e Título -->
         <div class="profile-header">
             <div class="avatar-wrapper" onclick="triggerSelectFile()">
-                <img id="profile-img" src="https://placeholder.com" alt="Foto de Perfil">
+                <img id="profile-img" src="https://via.placeholder.com/150" alt="Foto de Perfil">
                 <div class="avatar-overlay">
                     <span>EDITAR</span>
                 </div>
             </div>
-            <input type="file" id="file-input" accept="image/*" onchange="previewImage(event)">
-            
+            <input type="file" id="file-input" accept="image/*" onchange="previewImage(event)" style="display: none;">
+
             <h2 id="titulo-perfil-admin">Perfil do Administrador</h2>
         </div>
 
         <form id="profile-form" onsubmit="saveProfile(event)">
-            <!-- Campo Nome (Editável) -->
+            <!-- Campo Nome -->
             <div class="info-group">
                 <label class="label" for="user-name">Nome do usuário:</label>
-                <input type="text" id="user-name" class="input-field" value="Administrador Valistoque" required>
+                <input type="text" id="user-name" class="input-field" value="Administrador Valistoque" readonly required>
             </div>
 
-            <!-- Campo E-mail (Editável) -->
+            <!-- Campo E-mail -->
             <div class="info-group">
                 <label class="label" for="user-email">Email do usuário:</label>
-                <input type="email" id="user-email" class="input-field" value="admin@valistoque.com" required>
+                <input type="email" id="user-email" class="input-field" value="admin@valistoque.com" readonly required>
             </div>
 
-            <!-- Campo Senha -->
-            <div class="info-group">
-                <label class="label" for="user-password">Senha:</label>
-                 <input type="password" id="user-password" class="input-field" placeholder="Digite sua senha" required>
-            </div>
-
-            <!-- Campo Tipo de Conta (Apenas Leitura para segurança) -->
+            <!-- Campo Tipo de Conta -->
             <div class="info-group">
                 <span class="label">Tipo de conta:</span>
                 <div class="input-field disabled-field">
@@ -680,20 +674,39 @@
 
             <!-- Botões organizados -->
             <div class="button-group">
-                 <button type="submit" class="btn-save">
-                    Salvar Alterações
-                 </button>
-
-                 <button type="button"
-                    class="btn-excluir"
-                     onclick="excluirPerfil()">
-                    Excluir Perfil
-             </button>
-
-             <a href="Principal.html" class="btn-exit">
-             Sair para a tela principal
-            </a>
+                <a href="Principal.html" class="btn-exit">
+                    Sair para a tela principal
+                </a>
             </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+ function triggerSelectFile() {
+    document.getElementById('file-input').click();
+}
+
+async function atualizarFotoPerfil(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Preview imediato na tela
+    const reader = new FileReader();
+    reader.onload = (e) => document.getElementById('profile-img').src = e.target.result;
+    reader.readAsDataURL(file);
+
+    // Preparar o envio para o PHP e salvar no MySQL
+    const formData = new FormData();
+    formData.append('foto', file);
+    formData.append('id_usuario', 1); // ID do usuário logado na sessão
+       
+}
+    
+</script>
+    </div>
+</div>
 
         </form>
     </div>
@@ -1065,7 +1078,7 @@
 
     const nome = document.getElementById('nome-usuario').value;
     const email = document.getElementById('email-usuario').value;
-    const senha = document.getElementById('senha').value;
+    
 
     const tipoSelecionado =
         document.querySelector('input[name="tipo-usuario"]:checked').value;
@@ -1073,7 +1086,7 @@
     const usuario = {
         nome,
         email,
-        senha
+        
     };
 
     if (tipoSelecionado === 'administrador') {
@@ -1424,13 +1437,10 @@
     const email =
         document.getElementById('user-email').value;
 
-    const senha =
-        document.getElementById('user-password').value;
 
     const perfilAtual = {
         nome,
         email,
-        senha,
         perfil:
             document.getElementById('badge-perfil')
             .innerText
@@ -1485,41 +1495,29 @@
         renderizarCardsPrateleiras(listaFiltrada);
     }
         
-    function carregarPerfil() {
+   function carregarPerfil() {
+    // 1. Busca os dados de texto salvos
+    const perfil = JSON.parse(localStorage.getItem('perfilUsuario')) || {
+        nome: 'Usuário Valistoque',
+        email: 'usuario@valistoque.com.br'
+    };
 
-    const perfil =
-        JSON.parse(
-            localStorage.getItem('perfilUsuario')
-        );
+    // 2. Busca a foto salva em Base64 (ou caminho da imagem)
+    const fotoSalva = localStorage.getItem('fotoPerfilUsuario');
 
-    if (!perfil) return;
+    // 3. Captura os elementos do HTML
+    const inputNome = document.getElementById('user-name');
+    const inputEmail = document.getElementById('user-email');
+    const imgPerfil = document.getElementById('profile-img');
 
-    document.getElementById('user-name').value =
-        perfil.nome || '';
-
-    document.getElementById('user-email').value =
-        perfil.email || '';
-
-    document.getElementById('user-password').value =
-        perfil.senha || '';
+    // 4. Atribui os valores
+    if (inputNome) inputNome.value = perfil.nome || '';
+    if (inputEmail) inputEmail.value = perfil.email || '';
+    if (imgPerfil && fotoSalva) {
+        imgPerfil.src = fotoSalva;
+    }
 }
 
-function excluirPerfil() {
-
-    const confirmar = confirm(
-        "Tem certeza que deseja excluir este perfil?"
-    );
-
-    if (!confirmar) return;
-
-    localStorage.removeItem('perfilUsuario');
-
-    document.getElementById('user-name').value = '';
-    document.getElementById('user-email').value = '';
-    document.getElementById('user-password').value = '';
-
-    alert("Perfil excluído com sucesso.");
-}
 
     </script> 
 </body> 

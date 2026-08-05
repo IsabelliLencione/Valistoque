@@ -1,114 +1,43 @@
 <?php
-/**
- * ============================================================
- *  VALISTOQUE - API  /api/dashboard.php
- *  Retorna KPIs gerais, gráficos e listas resumidas para a
- *  tela inicial do sistema.
- * ============================================================
- */
-require_once __DIR__ . '/../includes/config.php';
+declare(strict_types=1);
+
+require_once __DIR__ . '/../includes/funcoes.php';
 require_once __DIR__ . '/alertas_check.php';
+
 exigirLogin();
-header('Content-Type: application/json; charset=utf-8');
+$pdo = pdo();
+recalcularAlertas($pdo);
 
-try {
-    varrerTodosAlertas(); // garante alertas atualizados
+$kpis = [
+    'total_produtos' => (int) $pdo->query('SELECT COUNT(*) FROM produto')->fetchColumn(),
+    'caixas_estoque_central' => (int) $pdo->query('SELECT COALESCE(SUM(quantidade_caixas), 0) FROM estoque')->fetchColumn(),
+    'caixas_prateleira' => (int) $pdo->query('SELECT COALESCE(SUM(quantidade_caixas), 0) FROM prateleira')->fetchColumn(),
+    'alertas_ativos' => (int) $pdo->query('SELECT COUNT(*) FROM alertas WHERE lido = 0')->fetchColumn(),
+];
 
-    // 1. KPIs gerais
-    $totalProdutos   = (int)$pdo->query("SELECT COUNT(*) FROM produto")->fetchColumn();
-    $totalEstoque    = (int)$pdo->query("SELECT COALESCE(SUM(quant_prod),0) FROM estoque")->fetchColumn();
-    $totalPrateleira = (int)$pdo->query("SELECT COALESCE(SUM(quant_item),0) FROM prateleira")->fetchColumn();
-    $totalAlertas    = (int)$pdo->query("SELECT COUNT(*) FROM alertas WHERE lido = 0")->fetchColumn();
+$grafico = $pdo->query("SELECT DATE(created_at) AS dia,
+SUM(CASE WHEN tipo LIKE 'entrada%' THEN quantidade_caixas ELSE 0 END) AS entradas,
+SUM(CASE WHEN tipo LIKE 'saida%' OR tipo LIKE 'transferencia%' THEN quantidade_caixas ELSE 0 END) AS saidas
+FROM movimentacao
+WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY DATE(created_at)
+ORDER BY dia ASC")->fetchAll();
 
-    // Valor total do estoque (sem JOIN duplicado)
-    $valorEstoque = (float)$pdo->query("
-        SELECT COALESCE(SUM(total.qt * p.preco_custo),0)
-        FROM produto p
-        LEFT JOIN (
-            SELECT id_produto, SUM(quant_prod) AS qt FROM estoque    GROUP BY id_produto
-            UNION ALL
-            SELECT id_produto, SUM(quant_item) AS qt FROM prateleira GROUP BY id_produto
-        ) total ON total.id_produto = p.id
-    ")->fetchColumn();
+$validade = $pdo->query("SELECT produto, lote, referencia, status FROM alertas WHERE tipo IN ('validade_proxima', 'produto_vencido') ORDER BY status DESC, created_at DESC LIMIT 10")->fetchAll();
+$estoqueBaixo = $pdo->query("SELECT produto, lote, codigo_prateleira, referencia, status FROM alertas WHERE tipo IN ('estoque_baixo_central', 'estoque_baixo_prateleira') ORDER BY status DESC, created_at DESC LIMIT 10")->fetchAll();
+$ultimas = $pdo->query('SELECT * FROM movimentacao ORDER BY created_at DESC LIMIT 10')->fetchAll();
+$maisMovimentados = $pdo->query("SELECT p.nome, SUM(m.quantidade_caixas) AS total_caixas
+FROM movimentacao m
+INNER JOIN produto p ON p.id = m.id_produto
+GROUP BY p.id, p.nome
+ORDER BY total_caixas DESC
+LIMIT 5")->fetchAll();
 
-    // 2. Validades próximas
-    $cfg  = lerConfigAlertas();
-    $dias = (int)$cfg['dias_val'];
-    $valProx = $pdo->prepare("
-        SELECT p.nome, e.lote, e.quant_prod, e.validade,
-               DATEDIFF(e.validade, CURDATE()) AS dias_restantes
-        FROM estoque e
-        INNER JOIN produto p ON p.id = e.id_produto
-        WHERE DATEDIFF(e.validade, CURDATE()) BETWEEN 0 AND ?
-        ORDER BY e.validade ASC LIMIT 5");
-    $valProx->execute([$dias]);
-    $validade_proxima = $valProx->fetchAll();
-
-    // 3. Estoque baixo
-    $minE = (int)$cfg['quant_min_estoq'];
-    $estBaixo = $pdo->prepare("
-        SELECT p.nome, e.lote, e.quant_prod, e.validade
-        FROM estoque e
-        INNER JOIN produto p ON p.id = e.id_produto
-        WHERE e.quant_prod <= ?
-        ORDER BY e.quant_prod ASC LIMIT 5");
-    $estBaixo->execute([$minE]);
-    $estoque_baixo = $estBaixo->fetchAll();
-
-    // 4. Últimas movimentações
-    $movs = $pdo->query("
-        SELECT m.*, p.nome AS produto_nome
-        FROM movimentacao m
-        LEFT JOIN produto p ON p.id = m.id_produto
-        ORDER BY m.data_hora DESC LIMIT 10")->fetchAll();
-
-    // 5. Gráfico — entradas x saídas (últimos 30 dias)
-    $grafico = $pdo->query("
-        SELECT DATE(data_hora) AS dia,
-               SUM(CASE WHEN tipo = 'entrada' THEN quantidade ELSE 0 END) AS entradas,
-               SUM(CASE WHEN tipo = 'saida'   THEN quantidade ELSE 0 END) AS saidas
-        FROM movimentacao
-        WHERE data_hora >= (CURDATE() - INTERVAL 30 DAY)
-        GROUP BY DATE(data_hora)
-        ORDER BY dia ASC")->fetchAll();
-
-    // 6. Resumo de alertas por tipo
-    $alertResumo = $pdo->query("
-        SELECT tipo_alerta, COUNT(*) AS qtd
-        FROM alertas WHERE lido = 0
-        GROUP BY tipo_alerta")->fetchAll();
-
-    // 7. Produtos mais movimentados
-    $maisMov = $pdo->query("
-        SELECT p.nome, SUM(m.quantidade) AS total
-        FROM movimentacao m
-        INNER JOIN produto p ON p.id = m.id_produto
-        WHERE m.data_hora >= (CURDATE() - INTERVAL 30 DAY)
-        GROUP BY m.id_produto
-        ORDER BY total DESC LIMIT 5")->fetchAll();
-
-    responderJson(true, [
-        'kpis' => [
-            'total_produtos'   => $totalProdutos,
-            'total_estoque'    => $totalEstoque,
-            'total_prateleira' => $totalPrateleira,
-            'total_alertas'    => $totalAlertas,
-            'valor_estoque'    => round($valorEstoque, 2),
-        ],
-        'validade_proxima'      => $validade_proxima,
-        'estoque_baixo'         => $estoque_baixo,
-        'ultimas_movimentacoes' => $movs,
-        'grafico_30dias'        => $grafico,
-        'resumo_alertas'        => $alertResumo,
-        'mais_movimentados'     => $maisMov,
-        'usuario'               => [
-            'nome'   => $_SESSION['usuario_nome']  ?? '',
-            'perfil' => $_SESSION['perfil']        ?? '',
-            'email'  => $_SESSION['usuario_email'] ?? '',
-        ],
-    ]);
-
-} catch (PDOException $e) {
-    error_log("API dashboard: " . $e->getMessage());
-    responderJson(false, null, $e->getMessage(), 500);
-}
+responderJson(true, 'Dashboard carregado com sucesso.', [
+    'kpis' => $kpis,
+    'grafico_30_dias' => $grafico,
+    'validade_proxima' => $validade,
+    'estoque_baixo' => $estoqueBaixo,
+    'ultimas_movimentacoes' => $ultimas,
+    'produtos_mais_movimentados' => $maisMovimentados,
+]);

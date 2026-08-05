@@ -1,76 +1,72 @@
 <?php
-/**
- * ============================================================
- *  VALISTOQUE - API  /admin/usuarios.php
- *  Apenas administradores. Gerencia administradores e funcionários.
- *  Parâmetro perfil = adm | func (padrão: func)
- * ============================================================
- */
-require_once __DIR__ . '/../includes/config.php';
-exigirLogin('adm'); // somente admin
-header('Content-Type: application/json; charset=utf-8');
+declare(strict_types=1);
 
-$metodo = $_SERVER['REQUEST_METHOD'];
-$id     = isset($_GET['id']) ? (int)$_GET['id'] : null;
-$perfil = $_GET['perfil'] ?? 'func';
-if (!in_array($perfil, ['adm','func'], true)) {
-    responderJson(false, null, 'Perfil inválido.', 400);
-}
-$tabela = ($perfil === 'adm') ? 'adm' : 'func';
+require_once __DIR__ . '/../includes/funcoes.php';
 
-try {
-    switch ($metodo) {
+$admin = exigirAdmin();
+$pdo = pdo();
+$metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$perfil = perfilNormalizado((string) ($_GET['perfil'] ?? ''));
+$tabelas = $perfil ? [tabelaPorPerfil($perfil)] : ['adm', 'func'];
 
-        case 'GET':
-            if ($id) {
-                $stmt = $pdo->prepare("SELECT id, nome, Email, cpf, ativo, created_at
-                                       FROM {$tabela} WHERE id = ?");
-                $stmt->execute([$id]);
-                $u = $stmt->fetch();
-                if (!$u) responderJson(false, null, 'Não encontrado.', 404);
-                responderJson(true, $u);
-            } else {
-                $stmt = $pdo->query("SELECT id, nome, Email, cpf, ativo, created_at
-                                     FROM {$tabela} ORDER BY nome ASC");
-                responderJson(true, $stmt->fetchAll());
-            }
-            break;
-
-        case 'PUT':
-            if (!$id) responderJson(false, null, 'ID obrigatório.', 400);
-            $d = json_decode(file_get_contents('php://input'), true);
-            $campos = ['nome','Email','ativo'];
-            $sets = []; $params = [];
-            foreach ($campos as $c) {
-                if (array_key_exists($c, $d)) { $sets[] = "$c = ?"; $params[] = $d[$c]; }
-            }
-            if (isset($d['nova_senha']) && strlen($d['nova_senha']) >= 6) {
-                $sets[]   = "Senha = ?";
-                $params[] = password_hash($d['nova_senha'], PASSWORD_DEFAULT);
-            }
-            if (empty($sets)) responderJson(false, null, 'Nada para atualizar.', 400);
-            $params[] = $id;
-            $stmt = $pdo->prepare("UPDATE {$tabela} SET " . implode(', ', $sets) . " WHERE id = ?");
-            $stmt->execute($params);
-            registrarLog('USUARIO_EDITAR', "{$perfil} ID {$id}");
-            responderJson(true, null, 'Usuário atualizado.');
-            break;
-
-        case 'DELETE':
-            if (!$id) responderJson(false, null, 'ID obrigatório.', 400);
-            if ($perfil === 'adm' && $id === (int)$_SESSION['usuario_id']) {
-                responderJson(false, null, 'Você não pode excluir sua própria conta.', 400);
-            }
-            $stmt = $pdo->prepare("DELETE FROM {$tabela} WHERE id = ?");
-            $stmt->execute([$id]);
-            registrarLog('USUARIO_EXCLUIR', "{$perfil} ID {$id}");
-            responderJson(true, null, 'Usuário excluído.');
-            break;
-
-        default:
-            responderJson(false, null, 'Método não suportado.', 405);
+if ($metodo === 'GET') {
+    $saida = [];
+    foreach ($tabelas as $tabela) {
+        $stmt = $pdo->query("SELECT id, nome, email, cpf, ativo, created_at, updated_at FROM {$tabela} ORDER BY nome ASC");
+        $saida[perfilPorTabela($tabela)] = $stmt->fetchAll();
     }
-} catch (PDOException $e) {
-    error_log("API usuarios: " . $e->getMessage());
-    responderJson(false, null, $e->getMessage(), 500);
+    responderJson(true, 'Usuários carregados com sucesso.', $saida);
 }
+
+$dados = obterDadosRequisicao();
+$id = (int) ($dados['id'] ?? $_GET['id'] ?? 0);
+$perfilDestino = perfilNormalizado((string) ($dados['perfil'] ?? $_GET['perfil'] ?? $perfil));
+$tabela = tabelaPorPerfil($perfilDestino);
+
+if ($id <= 0 || $tabela === '') {
+    responderJson(false, 'Informe id e perfil válidos.', null, 422);
+}
+
+if ($metodo === 'PUT') {
+    $nome = limpar($dados['nome'] ?? '');
+    $email = strtolower(limpar($dados['email'] ?? ''));
+    $cpf = formatarCpf((string) ($dados['cpf'] ?? ''));
+    $ativo = array_key_exists('ativo', $dados) ? (int) ((bool) $dados['ativo']) : 1;
+
+    if ($nome === '' || !validarEmail($email) || !validarCPF($cpf)) {
+        responderJson(false, 'Dados inválidos para atualização.', null, 422);
+    }
+
+    if (emailOuCpfEmUso($pdo, $email, $cpf, $id, $tabela)) {
+        responderJson(false, 'Email ou CPF já cadastrados.', null, 409);
+    }
+
+    $sql = "UPDATE {$tabela} SET nome = :nome, email = :email, cpf = :cpf, ativo = :ativo";
+    $params = [':nome' => $nome, ':email' => $email, ':cpf' => $cpf, ':ativo' => $ativo, ':id' => $id];
+
+    if (!empty($dados['senha'])) {
+        $sql .= ', senha = :senha, password_updated_at = NOW()';
+        $params[':senha'] = password_hash((string) $dados['senha'], PASSWORD_BCRYPT);
+    }
+
+    $sql .= ' WHERE id = :id';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    registrarLog($admin, 'atualizar_usuario', 'usuario', $id, ['perfil' => $perfilDestino]);
+    responderJson(true, 'Usuário atualizado com sucesso.');
+}
+
+if ($metodo === 'DELETE') {
+    if (($admin['id'] ?? 0) === $id && $perfilDestino === 'administrador') {
+        responderJson(false, 'Você não pode excluir o próprio usuário logado.', null, 409);
+    }
+
+    $stmt = $pdo->prepare("DELETE FROM {$tabela} WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+
+    registrarLog($admin, 'excluir_usuario', 'usuario', $id, ['perfil' => $perfilDestino]);
+    responderJson(true, 'Usuário excluído com sucesso.');
+}
+
+responderJson(false, 'Método não permitido.', null, 405);

@@ -1,82 +1,59 @@
 <?php
-/**
- * ============================================================
- *  VALISTOQUE - Solicitar recuperação de senha
- *  Gera código de 6 dígitos e token válido por 30 minutos
- * ============================================================
- */
-require_once __DIR__ . '/../includes/config.php';
+declare(strict_types=1);
 
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    redirecionar('../../frontend/recuperasenha.html');
+require_once __DIR__ . '/../includes/funcoes.php';
+
+validarMetodo('POST');
+
+$dados = obterDadosRequisicao();
+$email = strtolower(limpar($dados['email'] ?? ''));
+$cpf = formatarCpf((string) ($dados['cpf'] ?? ''));
+$perfil = perfilNormalizado((string) ($dados['perfil'] ?? ''));
+
+if (!validarEmail($email) || !validarCPF($cpf)) {
+    responderJson(false, 'Informe email e CPF válidos.', null, 422);
 }
 
-$email  = trim($_POST['email'] ?? '');
-$cpf    = preg_replace('/\D/', '', $_POST['cpf'] ?? '');
-$perfil = $_POST['perfil'] ?? 'adm';
+$pdo = pdo();
+$alvos = $perfil ? [tabelaPorPerfil($perfil)] : ['adm', 'func'];
+$encontrado = null;
+$tabelaEncontrada = null;
 
-if (!validarEmail($email) || !validarCpf($cpf)) {
-    alertaJs('E-mail ou CPF inválido!');
-}
-if (!in_array($perfil, ['adm', 'func'], true)) $perfil = 'adm';
-$tabela = ($perfil === 'adm') ? 'adm' : 'func';
-
-try {
-    // Verifica se usuário existe
-    $stmt = $pdo->prepare("SELECT id, Email FROM {$tabela} WHERE Email = ? AND cpf = ? LIMIT 1");
-    $stmt->execute([$email, $cpf]);
+foreach ($alvos as $tabela) {
+    $stmt = $pdo->prepare("SELECT id, nome, email, cpf FROM {$tabela} WHERE email = :email AND cpf = :cpf AND ativo = 1 LIMIT 1");
+    $stmt->execute([':email' => $email, ':cpf' => $cpf]);
     $usuario = $stmt->fetch();
-
-    if (!$usuario) {
-        alertaJs('Dados não encontrados. Verifique e-mail e CPF.');
+    if ($usuario) {
+        $encontrado = $usuario;
+        $tabelaEncontrada = $tabela;
+        break;
     }
-
-    // Gera código e token
-    $codigo = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-    $token  = bin2hex(random_bytes(32));
-    $expira = date('Y-m-d H:i:s', time() + 1800); // 30 min
-
-    // Invalida códigos antigos
-    $upd = $pdo->prepare("UPDATE recuperacao_senha SET usado = 1
-                          WHERE perfil = ? AND usuario_id = ? AND usado = 0");
-    $upd->execute([$perfil, $usuario['id']]);
-
-    // Insere novo
-    $ins = $pdo->prepare("INSERT INTO recuperacao_senha
-        (perfil, usuario_id, email, codigo, token, expira_em)
-        VALUES (?, ?, ?, ?, ?, ?)");
-    $ins->execute([$perfil, $usuario['id'], $email, $codigo, $token, $expira]);
-
-    registrarLog('RECUPERACAO_SENHA', "Solicitação para {$email}");
-
-    $_SESSION['recup_token']  = $token;
-    $_SESSION['recup_email']  = $email;
-    $_SESSION['recup_perfil'] = $perfil;
-
-    // Em produção, este código seria enviado por e-mail.
-    echo "<!DOCTYPE html>
-    <html lang='pt-br'><head><meta charset='UTF-8'>
-    <title>Código de Recuperação</title>
-    <style>
-        body{font-family:sans-serif;background:linear-gradient(to bottom,#fff 70%,#708090);
-             min-height:100vh;display:flex;align-items:center;justify-content:center;}
-        .box{background:rgba(255,255,255,.9);border-radius:14px;padding:40px;
-             box-shadow:0 4px 20px rgba(0,0,0,.15);text-align:center;max-width:420px;}
-        .codigo{font-size:48px;letter-spacing:6px;color:#4682B4;font-weight:bold;
-                margin:20px 0;background:#f1f5f8;padding:18px;border-radius:10px;}
-        a{display:inline-block;margin-top:18px;background:#4682B4;color:#fff;
-          text-decoration:none;padding:12px 30px;border-radius:30px;font-weight:600;}
-    </style></head><body>
-    <div class='box'>
-        <h2>📧 Código de Recuperação</h2>
-        <p>Em produção, enviaríamos este código para <b>{$email}</b>.</p>
-        <div class='codigo'>{$codigo}</div>
-        <p>Válido por 30 minutos.</p>
-        <a href='../../frontend/codigo.html'>Inserir código →</a>
-    </div></body></html>";
-    exit;
-
-} catch (PDOException $e) {
-    error_log("Erro recuperação: " . $e->getMessage());
-    alertaJs('Erro interno. Tente novamente.');
 }
+
+if (!$encontrado || !$tabelaEncontrada) {
+    responderJson(false, 'Nenhum usuário encontrado com os dados informados.', null, 404);
+}
+
+$codigo = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+$expiraEm = date('Y-m-d H:i:s', strtotime('+' . RECOVERY_CODE_TTL_MINUTES . ' minutes'));
+$perfilFinal = perfilPorTabela($tabelaEncontrada);
+
+$stmt = $pdo->prepare('INSERT INTO recuperacao_senha (perfil, usuario_id, email, codigo, expira_em, ip) VALUES (:perfil, :usuario_id, :email, :codigo, :expira_em, :ip)');
+$stmt->execute([
+    ':perfil' => $perfilFinal,
+    ':usuario_id' => (int) $encontrado['id'],
+    ':email' => $email,
+    ':codigo' => $codigo,
+    ':expira_em' => $expiraEm,
+    ':ip' => ipCliente(),
+]);
+
+registrarLog(['id' => (int) $encontrado['id'], 'nome' => $encontrado['nome'], 'perfil' => $perfilFinal], 'solicitar_recuperacao', 'recuperacao_senha', (int) $pdo->lastInsertId(), ['email' => $email]);
+
+responderJson(true, 'Código de recuperação gerado com sucesso.', [
+    'email' => $email,
+    'perfil' => $perfilFinal,
+    'codigo' => $codigo,
+    'expira_em' => $expiraEm,
+    'observacao' => 'Ambiente local/demo: o código é retornado em JSON porque não há serviço de e-mail configurado.',
+]);

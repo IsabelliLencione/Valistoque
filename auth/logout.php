@@ -1,24 +1,12 @@
 <?php
-/**
- * ============================================================
- *  VALISTOQUE - Encerrar sessão
- * ============================================================
- */
-require_once __DIR__ . '/../includes/config.php';
+declare(strict_types=1);
 
-if (isset($_SESSION['usuario_id'])) {
-    registrarLog('LOGOUT', 'Saída manual do sistema');
+require_once __DIR__ . '/../includes/funcoes.php';
+
+validarMetodo(['GET', 'POST']);
+$usuario = usuarioAtual();
+if ($usuario) {
+    registrarLog($usuario, 'logout', 'autenticacao', $usuario['id'] ?? null);
 }
-
-$_SESSION = [];
-if (ini_get("session.use_cookies")) {
-    $params = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000,
-        $params["path"], $params["domain"],
-        $params["secure"], $params["httponly"]
-    );
-}
-session_destroy();
-
-header("Location: ../../frontend/login.html?msg=logout");
-exit;
+encerrarSessaoUsuario();
+responderJson(true, 'Logout realizado com sucesso.');

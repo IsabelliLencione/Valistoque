@@ -1,96 +1,89 @@
 <?php
-/**
- * ============================================================
- *  VALISTOQUE - API REST  /api/alertas.php
- *  GET    -> Lista alertas (?todos=1 para incluir lidos)
- *            ?varrer=1 força regeração; ?rota=config retorna config
- *  POST   -> ?id=N&acao=ler  marca alerta como lido
- *  PUT    -> ?rota=config    atualiza parâmetros (apenas admin)
- *  DELETE -> ?id=N           exclui alerta (apenas admin)
- * ============================================================
- */
-require_once __DIR__ . '/../includes/config.php';
-require_once __DIR__ . '/alertas_check.php';
-exigirLogin();
-header('Content-Type: application/json; charset=utf-8');
+declare(strict_types=1);
 
-$metodo = $_SERVER['REQUEST_METHOD'];
-$id     = isset($_GET['id']) ? (int)$_GET['id'] : null;
-$acao   = $_GET['acao'] ?? null;
+require_once __DIR__ . '/../includes/funcoes.php';
 
-try {
-    if ($metodo === 'GET' && !empty($_GET['varrer'])) {
-        varrerTodosAlertas();
-    }
+function recalcularAlertas(PDO $pdo): array
+{
+    $config = obterConfiguracaoAlertas($pdo);
+    $diasAntes = (int) ($config['dias_antes_validade'] ?? 30);
+    $minCentral = (int) ($config['caixas_minimas_central'] ?? 10);
+    $minPrateleira = (int) ($config['caixas_minimas_prateleira'] ?? 5);
 
-    if ($metodo === 'PUT' && ($_GET['rota'] ?? '') === 'config') {
-        if (!ehAdmin()) responderJson(false, null, 'Apenas admin.', 403);
-        $d = json_decode(file_get_contents('php://input'), true);
-        $stmt = $pdo->prepare("UPDATE config_alertas
-                               SET dias_val = ?, quant_min_estoq = ?, quant_min_prat = ?
-                               WHERE id = (SELECT id FROM (SELECT id FROM config_alertas ORDER BY id LIMIT 1) t)");
-        $stmt->execute([
-            (int)($d['dias_val']        ?? DIAS_VALIDADE_PADRAO),
-            (int)($d['quant_min_estoq'] ?? ESTOQUE_MIN_PADRAO),
-            (int)($d['quant_min_prat']  ?? PRATELEIRA_MIN_PADRAO),
-        ]);
-        registrarLog('CONFIG_ALERTAS_ATUALIZAR', json_encode($d));
-        responderJson(true, lerConfigAlertas(), 'Configuração atualizada.');
-    }
+    $pdo->beginTransaction();
+    try {
+        $pdo->exec('DELETE FROM alertas');
 
-    switch ($metodo) {
+        $gerados = [];
 
-        case 'GET':
-            if (($_GET['rota'] ?? '') === 'config') {
-                responderJson(true, lerConfigAlertas());
+        $sqlCentral = 'SELECT p.nome AS produto, e.lote, e.validade, e.quantidade_caixas FROM estoque e INNER JOIN produto p ON p.id = e.id_produto';
+        foreach ($pdo->query($sqlCentral)->fetchAll() as $item) {
+            $diasRestantes = (int) ceil((strtotime((string) $item['validade']) - strtotime(date('Y-m-d'))) / 86400);
+
+            if ($diasRestantes <= $diasAntes) {
+                $tipo = $diasRestantes <= 0 ? 'produto_vencido' : 'validade_proxima';
+                $status = $diasRestantes <= 0 ? 'critico' : 'aviso';
+                $referencia = $diasRestantes <= 0 ? 'Validade vencida' : $diasRestantes . ' dia(s) restantes';
+                $mensagem = $diasRestantes <= 0
+                    ? 'Produto vencido no estoque central.'
+                    : 'Produto próximo da validade no estoque central.';
+
+                $gerados[] = [
+                    'tipo' => $tipo,
+                    'status' => $status,
+                    'produto' => $item['produto'],
+                    'lote' => $item['lote'],
+                    'codigo_prateleira' => null,
+                    'referencia' => $referencia,
+                    'mensagem' => $mensagem,
+                ];
             }
 
-            $todos = !empty($_GET['todos']);
-            $sql = "SELECT a.*, p.nome AS produto_nome
-                    FROM alertas a
-                    LEFT JOIN produto p ON p.id = a.id_produto
-                    WHERE 1=1";
-            if (!$todos) $sql .= " AND a.lido = 0";
-            $sql .= " ORDER BY a.data_geracao DESC LIMIT 200";
-            $stmt = $pdo->query($sql);
-            $lista = $stmt->fetchAll();
-
-            $resumo = [
-                'total'   => count($lista),
-                'validade'=> 0, 'vencido' => 0,
-                'estoque' => 0, 'prateleira'=> 0
-            ];
-            foreach ($lista as $a) {
-                switch ($a['tipo_alerta']) {
-                    case 'Validade Próxima':         $resumo['validade']++;   break;
-                    case 'Produto Vencido':          $resumo['vencido']++;    break;
-                    case 'Estoque Baixo Central':    $resumo['estoque']++;    break;
-                    case 'Estoque Baixo Prateleira': $resumo['prateleira']++; break;
-                }
+            if ((int) $item['quantidade_caixas'] <= $minCentral) {
+                $gerados[] = [
+                    'tipo' => 'estoque_baixo_central',
+                    'status' => ((int) $item['quantidade_caixas'] <= max(1, (int) ceil($minCentral / 2))) ? 'critico' : 'aviso',
+                    'produto' => $item['produto'],
+                    'lote' => $item['lote'],
+                    'codigo_prateleira' => null,
+                    'referencia' => $item['quantidade_caixas'] . ' caixa(s)',
+                    'mensagem' => 'Quantidade abaixo do mínimo no estoque central.',
+                ];
             }
-            responderJson(true, ['resumo' => $resumo, 'lista' => $lista]);
-            break;
+        }
 
-        case 'POST':
-            if (!$id || $acao !== 'ler') responderJson(false, null, 'Parâmetros inválidos.', 400);
-            $stmt = $pdo->prepare("UPDATE alertas SET lido = 1 WHERE id = ?");
-            $stmt->execute([$id]);
-            responderJson(true, null, 'Alerta marcado como lido.');
-            break;
+        $sqlPrateleira = 'SELECT p.nome AS produto, pr.lote, pr.validade, pr.codigo_prateleira, pr.quantidade_caixas FROM prateleira pr INNER JOIN produto p ON p.id = pr.id_produto';
+        foreach ($pdo->query($sqlPrateleira)->fetchAll() as $item) {
+            if ((int) $item['quantidade_caixas'] <= $minPrateleira) {
+                $gerados[] = [
+                    'tipo' => 'estoque_baixo_prateleira',
+                    'status' => ((int) $item['quantidade_caixas'] <= max(1, (int) ceil($minPrateleira / 2))) ? 'critico' : 'aviso',
+                    'produto' => $item['produto'],
+                    'lote' => $item['lote'],
+                    'codigo_prateleira' => $item['codigo_prateleira'],
+                    'referencia' => $item['quantidade_caixas'] . ' caixa(s)',
+                    'mensagem' => 'Quantidade abaixo do mínimo na prateleira.',
+                ];
+            }
+        }
 
-        case 'DELETE':
-            if (!ehAdmin()) responderJson(false, null, 'Apenas admin.', 403);
-            if (!$id) responderJson(false, null, 'ID obrigatório.', 400);
-            $stmt = $pdo->prepare("DELETE FROM alertas WHERE id = ?");
-            $stmt->execute([$id]);
-            registrarLog('ALERTA_EXCLUIR', "ID {$id}");
-            responderJson(true, null, 'Alerta excluído.');
-            break;
+        $stmt = $pdo->prepare('INSERT INTO alertas (tipo, status, produto, lote, codigo_prateleira, referencia, mensagem) VALUES (:tipo, :status, :produto, :lote, :codigo_prateleira, :referencia, :mensagem)');
+        foreach ($gerados as $alerta) {
+            $stmt->execute([
+                ':tipo' => $alerta['tipo'],
+                ':status' => $alerta['status'],
+                ':produto' => $alerta['produto'],
+                ':lote' => $alerta['lote'],
+                ':codigo_prateleira' => $alerta['codigo_prateleira'],
+                ':referencia' => $alerta['referencia'],
+                ':mensagem' => $alerta['mensagem'],
+            ]);
+        }
 
-        default:
-            responderJson(false, null, 'Método não suportado.', 405);
+        $pdo->commit();
+        return $gerados;
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
     }
-} catch (PDOException $e) {
-    error_log("API alertas: " . $e->getMessage());
-    responderJson(false, null, $e->getMessage(), 500);
 }

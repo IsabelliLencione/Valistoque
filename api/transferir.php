@@ -1,105 +1,78 @@
 <?php
-/**
- * ============================================================
- *  VALISTOQUE - API  /api/transferir.php
- *  POST -> Transfere quantidade do ESTOQUE para a PRATELEIRA
- *          { id_produto, lote, quantidade, codigo_prateleira? }
- * ============================================================
- */
-require_once __DIR__ . '/../includes/config.php';
+declare(strict_types=1);
+
+require_once __DIR__ . '/../includes/funcoes.php';
 require_once __DIR__ . '/alertas_check.php';
-exigirLogin();
-header('Content-Type: application/json; charset=utf-8');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    responderJson(false, null, 'Use POST.', 405);
+$usuario = exigirLogin();
+validarMetodo('POST');
+
+$pdo = pdo();
+$dados = obterDadosRequisicao();
+$idProduto = (int) ($dados['id_produto'] ?? 0);
+$lote = limpar($dados['lote'] ?? '');
+$quantidade = (int) ($dados['quantidade'] ?? $dados['quantidade_caixas'] ?? 0);
+$codigoPrateleira = limpar($dados['codigo_prateleira'] ?? 'PRAT-01');
+
+if ($idProduto <= 0 || $lote === '' || $quantidade <= 0) {
+    responderJson(false, 'Dados inválidos para transferência.', null, 422);
 }
 
-$d = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-foreach (['id_produto', 'lote', 'quantidade'] as $c) {
-    if (empty($d[$c])) responderJson(false, null, "Campo '$c' obrigatório.", 400);
+$stmt = $pdo->prepare('SELECT * FROM estoque WHERE id_produto = :id_produto AND lote = :lote LIMIT 1');
+$stmt->execute([':id_produto' => $idProduto, ':lote' => $lote]);
+$estoque = $stmt->fetch();
+
+if (!$estoque || (int) $estoque['quantidade_caixas'] < $quantidade) {
+    responderJson(false, 'Quantidade insuficiente no estoque central.', null, 409);
 }
 
-$idProduto  = (int)$d['id_produto'];
-$lote       = $d['lote'];
-$qtde       = (int)$d['quantidade'];
-$codigoPrat = $d['codigo_prateleira'] ?? null;
-
-if ($qtde <= 0) responderJson(false, null, 'Quantidade deve ser > 0.', 400);
-
+$pdo->beginTransaction();
 try {
-    $pdo->beginTransaction();
+    $updEstoque = $pdo->prepare('UPDATE estoque SET quantidade_caixas = quantidade_caixas - :quantidade WHERE id = :id');
+    $updEstoque->execute([':quantidade' => $quantidade, ':id' => (int) $estoque['id']]);
 
-    // 1. Busca o lote no estoque
-    $stmt = $pdo->prepare("SELECT * FROM estoque
-                           WHERE id_produto = ? AND lote = ?
-                           LIMIT 1 FOR UPDATE");
-    $stmt->execute([$idProduto, $lote]);
-    $est = $stmt->fetch();
-
-    if (!$est) {
-        $pdo->rollBack();
-        responderJson(false, null, 'Lote não encontrado no estoque.', 404);
-    }
-    if ($est['quant_prod'] < $qtde) {
-        $pdo->rollBack();
-        responderJson(false, null, "Estoque insuficiente. Disponível: {$est['quant_prod']}.", 400);
-    }
-
-    // 2. Decrementa estoque
-    $upd = $pdo->prepare("UPDATE estoque SET quant_prod = quant_prod - ? WHERE id = ?");
-    $upd->execute([$qtde, $est['id']]);
-
-    // 3. Pega peso unitário do produto
-    $qProd = $pdo->prepare("SELECT peso FROM produto WHERE id = ?");
-    $qProd->execute([$idProduto]);
-    $pesoUnit = (float)$qProd->fetchColumn();
-
-    // 4. Procura prateleira já existente com mesma validade
-    $busca = $pdo->prepare("SELECT id, quant_item, peso_prat FROM prateleira
-                            WHERE id_produto = ? AND validade = ?
-                            LIMIT 1");
-    $busca->execute([$idProduto, $est['validade']]);
-    $prat = $busca->fetch();
-
-    if ($prat) {
-        $novaQtd  = $prat['quant_item'] + $qtde;
-        $novoPeso = $prat['peso_prat']   + ($qtde * $pesoUnit);
-        $u = $pdo->prepare("UPDATE prateleira
-                            SET quant_item = ?, peso_prat = ?, data_reposicao = NOW()
-                            WHERE id = ?");
-        $u->execute([$novaQtd, $novoPeso, $prat['id']]);
-        $idPrateleira = $prat['id'];
-    } else {
-        $ins = $pdo->prepare("INSERT INTO prateleira
-                              (id_produto, codigo_prateleira, validade, quant_item, peso_prat)
-                              VALUES (?,?,?,?,?)");
-        $ins->execute([$idProduto, $codigoPrat, $est['validade'], $qtde, $qtde * $pesoUnit]);
-        $idPrateleira = $pdo->lastInsertId();
-    }
-
-    // 5. Registra movimentação
-    $mv = $pdo->prepare("INSERT INTO movimentacao
-        (id_produto, tipo, origem, destino, quantidade, id_usuario, perfil_usuario, observacao)
-        VALUES (?, 'transferencia', 'estoque', 'prateleira', ?, ?, ?, ?)");
-    $mv->execute([
-        $idProduto, $qtde, $_SESSION['usuario_id'], $_SESSION['perfil'],
-        "Transferência lote {$lote} para prateleira #{$idPrateleira}"
+    $selPrat = $pdo->prepare('SELECT * FROM prateleira WHERE id_produto = :id_produto AND lote = :lote AND codigo_prateleira = :codigo_prateleira LIMIT 1');
+    $selPrat->execute([
+        ':id_produto' => $idProduto,
+        ':lote' => $lote,
+        ':codigo_prateleira' => $codigoPrateleira,
     ]);
+    $prat = $selPrat->fetch();
+
+    $unidades = $quantidade * max(1, (int) $estoque['produtos_por_caixa']);
+    if ($prat) {
+        $updPrat = $pdo->prepare('UPDATE prateleira SET quantidade_caixas = quantidade_caixas + :quantidade, unidades = unidades + :unidades WHERE id = :id');
+        $updPrat->execute([':quantidade' => $quantidade, ':unidades' => $unidades, ':id' => (int) $prat['id']]);
+        $idPrateleira = (int) $prat['id'];
+    } else {
+        $insPrat = $pdo->prepare('INSERT INTO prateleira (id_produto, codigo_prateleira, lote, validade, quantidade_caixas, unidades) VALUES (:id_produto, :codigo_prateleira, :lote, :validade, :quantidade_caixas, :unidades)');
+        $insPrat->execute([
+            ':id_produto' => $idProduto,
+            ':codigo_prateleira' => $codigoPrateleira,
+            ':lote' => $lote,
+            ':validade' => $estoque['validade'],
+            ':quantidade_caixas' => $quantidade,
+            ':unidades' => $unidades,
+        ]);
+        $idPrateleira = (int) $pdo->lastInsertId();
+    }
+
+    registrarMovimentacao($pdo, [
+        'id_produto' => $idProduto,
+        'tipo' => 'transferencia_estoque_prateleira',
+        'origem' => 'estoque_central',
+        'destino' => $codigoPrateleira,
+        'lote' => $lote,
+        'quantidade_caixas' => $quantidade,
+        'quantidade_unidades' => $unidades,
+        'observacao' => 'Transferência para prateleira',
+    ], $usuario);
 
     $pdo->commit();
-
-    // 6. Recalcula alertas
-    verificarAlertasProduto($idProduto);
-
-    registrarLog('TRANSFERENCIA', "Produto {$idProduto} | Qtd {$qtde} | Lote {$lote}");
-    responderJson(true,
-        ['id_prateleira' => (int)$idPrateleira],
-        "Transferidos {$qtde} item(ns) para a prateleira."
-    );
-
-} catch (Exception $e) {
-    if ($pdo->inTransaction()) $pdo->rollBack();
-    error_log("Transferência: " . $e->getMessage());
-    responderJson(false, null, 'Erro: ' . $e->getMessage(), 500);
+    recalcularAlertas($pdo);
+    registrarLog($usuario, 'transferir_estoque_prateleira', 'prateleira', $idPrateleira, ['lote' => $lote]);
+    responderJson(true, 'Transferência realizada com sucesso.', ['id_prateleira' => $idPrateleira]);
+} catch (Throwable $e) {
+    $pdo->rollBack();
+    responderJson(false, 'Erro ao transferir produto.', ['erro' => $e->getMessage()], 500);
 }

@@ -1197,20 +1197,28 @@ async function atualizarFotoPerfil(event) {
 
 
     // Parte da CENTRAL DE ALERTAS
-        function salvarConfiguracoesAlertas(event) {
-            event.preventDefault();
+       function salvarConfiguracoesAlertas(event) {
+    event.preventDefault();
 
-            configuracoesAlertas = {
-                diasAntesValidade: parseInt(document.getElementById('dias-alerta-validade').value) || 30,
-                caixasMinimas: parseInt(document.getElementById('caixas-alerta-estoque').value) || 10,
-                intervaloMinutos: parseInt(document.getElementById('intervalo-alerta').value) || 15
-            };
+    // 1. Atualiza as configurações com os novos valores da tela
+    configuracoesAlertas = {
+        diasAntesValidade: parseInt(document.getElementById('dias-alerta-validade').value) || 30,
+        caixasMinimas: parseInt(document.getElementById('caixas-alerta-estoque').value) || 10,
+        intervaloMinutos: parseInt(document.getElementById('intervalo-alerta').value) || 15
+    };
 
-            localStorage.setItem('configuracoesAlertas', JSON.stringify(configuracoesAlertas));
-            processarAlertas(true);
-            iniciarMonitoramentoAlertas();
-            alert('Configurações de alerta salvas com sucesso!');
-        }
+    localStorage.setItem('configuracoesAlertas', JSON.stringify(configuracoesAlertas));
+
+    // 2. LIMPA O HISTÓRICO ANTIGO para que as regras antigas sumam da tela!
+    historicoAlertas = [];
+    localStorage.removeItem('historicoAlertas');
+
+    // 3. Processa novamente os produtos com as NOVAS regras
+    processarAlertas(true);
+    iniciarMonitoramentoAlertas();
+
+    alert('Configurações salvas e alertas recalculados com sucesso!');
+}
 
         function preencherFormularioAlertas() {
             const dias = document.getElementById('dias-alerta-validade');

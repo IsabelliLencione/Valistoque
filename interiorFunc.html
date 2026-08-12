@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel do Funcionário - Valistoque</title>
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Roboto", sans-serif;
+      }
+
+      body {
+        background-color: #f0f2f5;
+        color: #333;
+        min-height: 100vh;
+        display: flex;
+      }
+
+      .layout-container {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Sidebar lateral */
+      .sidebar {
+        width: 260px;
+        background-color: #3f5866;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+
+      .sidebar-menu {
+        list-style: none;
+        padding-top: 20px;
+      }
+
+      .sidebar-menu li a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        color: #d1dbe0;
+        text-decoration: none;
+        font-size: 16px;
+        transition:
+          background 0.2s,
+          color 0.2s;
+      }
+
+      .sidebar-menu li a:hover,
+      .sidebar-menu li a.active {
+        background-color: #2e4350;
+        color: #ffffff;
+        font-weight: 500;
+      }
+
+      .sidebar-menu li a i {
+        font-size: 20px;
+      }
+
+      .ponto-alerta {
+        width: 8px;
+        height: 8px;
+        background-color: #e74c3c;
+        border-radius: 50%;
+        margin-left: auto;
+      }
+
+      .btn-sair {
+        padding: 20px;
+        color: #e74c3c;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: bold;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .btn-sair:hover {
+        background-color: #2e4350;
+      }
+
+      /* Área principal */
+      .main-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      /* Topbar Header */
+      .topbar {
+        height: 60px;
+        background-color: #334854;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px;
+      }
+
+      .topbar h1 {
+        font-size: 20px;
+        font-weight: 400;
+      }
+
+      .topbar .user-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        color: #c0d1db;
+      }
+
+      /* Conteúdo das Seções */
+      .content-container {
+        padding: 30px;
+        flex: 1;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      /* ESTILO DA SEÇÃO DE ALERTAS */
+      .alerta-card {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 20px 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+      }
+
+      .alerta-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 16px;
+      }
+
+      .bolinha-laranja {
+        width: 12px;
+        height: 12px;
+        background-color: #f39c12;
+        border-radius: 50%;
+      }
+
+      .bolinha-vermelha {
+        width: 12px;
+        height: 12px;
+        background-color: #e74c3c;
+        border-radius: 50%;
+      }
+
+      .alerta-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 15px;
+        color: #444;
+      }
+
+      .alerta-item:last-child {
+        border-bottom: none;
+      }
+
+      .alerta-item .col-nome {
+        font-weight: 500;
+        min-width: 120px;
+      }
+      .alerta-item .col-info {
+        color: #666;
+      }
+      .alerta-item .btn-fechar {
+        color: #ccc;
+        cursor: pointer;
+        font-size: 18px;
+        border: none;
+        background: transparent;
+      }
+      .alerta-item .btn-fechar:hover {
+        color: #999;
+      }
+
+      /* ESTILO EXATO DO FORMULÁRIO DE CADASTRO */
+      .card-cadastro-exato {
+        background-color: #e3e3e3;
+        border-radius: 12px;
+        padding: 35px 40px;
+        width: 100%;
+        max-width: 950px;
+        margin: 0 auto;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .card-cadastro-exato h2 {
+        font-size: 32px;
+        font-weight: 700;
+        color: #000000;
+        margin-bottom: 25px;
+      }
+
+      .form-exact {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .campo-exact {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .campo-exact label {
+        font-style: italic;
+        color: #235470;
+        font-size: 15px;
+      }
+
+      .campo-exact input {
+        width: 100%;
+        height: 48px;
+        padding: 0 16px;
+        border: 1px solid #cccccc;
+        border-radius: 8px;
+        background-color: #ffffff;
+        font-size: 16px;
+        outline: none;
+      }
+
+      .campo-exact input:focus {
+        border-color: #3ca0e3;
+      }
+
+      .btn-salvar-exact {
+        width: 100%;
+        height: 52px;
+        background-color: #3ca0e3;
+        border: 1px solid #2d89ca;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background-color 0.2s;
+      }
+
+      .btn-salvar-exact:hover {
+        background-color: #2b8bc7;
+      }
+
+      /* Estilo padrão de Tabelas das outras abas */
+      .card {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+      }
+
+      .card h2 {
+        font-size: 18px;
+        color: #2c3e50;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .tabela-dados {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+
+      .tabela-dados th,
+      .tabela-dados td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #e1e8ed;
+        font-size: 14px;
+      }
+
+      .tabela-dados th {
+        background-color: #f8fafc;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout-container">
+      <!-- Sidebar lateral -->
+      <aside class="sidebar">
+        <ul class="sidebar-menu">
+          <li>
+            <a href="#relatorio" class="menu-link" data-target="sec-relatorio"
+              ><i class="bx bxs-file"></i> Relatório</a
+            >
+          </li>
+          <li>
+            <a href="#cadastro" class="menu-link" data-target="sec-cadastro"
+              ><i class="bx bxs-box"></i> Cadastro produtos</a
+            >
+          </li>
+          <li>
+            <a
+              href="#prateleiras"
+              class="menu-link"
+              data-target="sec-prateleiras"
+              ><i class="bx bxs-folder"></i> Prateleiras</a
+            >
+          </li>
+          <li>
+            <a href="#estoque" class="menu-link" data-target="sec-estoque"
+              ><i class="bx bxs-city"></i> Estoque central</a
+            >
+          </li>
+          <li>
+            <a
+              href="#alertas"
+              class="menu-link active"
+              data-target="sec-alertas"
+              ><i class="bx bxs-error-circle"></i> Alertas
+              <span class="ponto-alerta"></span
+            ></a>
+          </li>
+        </ul>
+
+        <a href="login.html" class="btn-sair" id="btn-sair">
+          <i class="bx bxs-log-out"></i> Sair
+        </a>
+      </aside>
+
+      <!-- Área Central -->
+      <div class="main-wrapper">
+        <header class="topbar">
+          <h1>Painel de Controle</h1>
+          <div class="user-badge">
+            <i class="bx bxs-user-check"></i>
+            <span id="nome-exibicao">Funcionário</span>
+          </div>
+        </header>
+
+        <main class="content-container">
+          <!-- 1. ALERTAS (NOVA SEÇÃO) -->
+          <section id="sec-alertas" class="tab-content active">
+            <!-- Aviso de Estoque Mínimo -->
+            <div class="alerta-card">
+              <div class="alerta-header">
+                <span class="bolinha-laranja"></span>
+                Aviso de Estoque Mínimo
+              </div>
+              <div class="alerta-item">
+                <span class="col-nome">Arroz</span>
+                <span class="col-info">Setor D</span>
+                <span class="col-info">Prateleira A</span>
+                <span class="col-info">Cod: 8358304</span>
+                <span class="col-info">14/04/2026</span>
+                <button
+                  class="btn-fechar"
+                  onclick="this.parentElement.remove()"
+                >
+                  &#10005;
+                </button>
+              </div>
+              <div class="alerta-item">
+                <span class="col-nome">Arroz</span>
+                <span class="col-info">Setor D</span>
+                <span class="col-info">Prateleira A</span>
+                <span class="col-info">Cod: 8358304</span>
+                <span class="col-info">14/04/2026</span>
+                <button
+                  class="btn-fechar"
+                  onclick="this.parentElement.remove()"
+                >
+                  &#10005;
+                </button>
+              </div>
+            </div>
+
+            <!-- Produtos Próximos ao Vencimento -->
+            <div class="alerta-card">
+              <div class="alerta-header">
+                <span class="bolinha-vermelha"></span>
+                Produtos Próximos ao Vencimento
+              </div>
+              <div class="alerta-item">
+                <span class="col-nome">Leite</span>
+                <span class="col-info">Setor B</span>
+                <span class="col-info">Prateleira B</span>
+                <span class="col-info">Cod: 1837299</span>
+                <span class="col-info">11/04/2026</span>
+                <button
+                  class="btn-fechar"
+                  onclick="this.parentElement.remove()"
+                >
+                  &#10005;
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. Relatório -->
+          <section id="sec-relatorio" class="tab-content">
+            <div class="card">
+              <h2>
+                <i class="bx bxs-file"></i> Relatório de Registros e
+                Movimentações
+              </h2>
+              <p style="color: #666; font-size: 14px">
+                Histórico das últimas movimentações realizadas no turno.
+              </p>
+              <table class="tabela-dados">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Ação</th>
+                    <th>Setor</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Arroz 5kg</td>
+                    <td>Reposição na Prateleira A</td>
+                    <td>Setor D</td>
+                    <td>12/08/2026 14:20</td>
+                  </tr>
+                  <tr>
+                    <td>Leite Integral 1L</td>
+                    <td>Conferência de Validade</td>
+                    <td>Setor B</td>
+                    <td>12/08/2026 10:15</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- 3. Cadastro de Produto (IDÊNTICO À IMAGEM) -->
+          <section id="sec-cadastro" class="tab-content">
+            <div class="card-cadastro-exato">
+              <h2>Cadastro de Produto</h2>
+              <form class="form-exact" id="form-cadastro-exato">
+                <div class="campo-exact">
+                  <label for="nome-prod">Nome do produto:</label>
+                  <input type="text" id="nome-prod" required />
+                </div>
+
+                <div class="campo-exact">
+                  <label for="lote-prod">Lote:</label>
+                  <input type="text" id="lote-prod" required />
+                </div>
+
+                <div class="campo-exact">
+                  <label for="validade-prod">Data de validade:</label>
+                  <input type="date" id="validade-prod" required />
+                </div>
+
+                <div class="campo-exact">
+                  <label for="qtd-caixas">Quantidade de Caixas:</label>
+                  <input type="number" id="qtd-caixas" required />
+                </div>
+
+                <div class="campo-exact">
+                  <label for="prod-caixa">Produtos por Caixa:</label>
+                  <input type="number" id="prod-caixa" required />
+                </div>
+
+                <div class="campo-exact">
+                  <label for="peso-prod">Peso do Produto (kg):</label>
+                  <input type="number" step="0.01" id="peso-prod" required />
+                </div>
+
+                <button type="submit" class="btn-salvar-exact">
+                  Salvar Produto
+                </button>
+              </form>
+            </div>
+          </section>
+
+          <!-- 4. Prateleiras -->
+          <section id="sec-prateleiras" class="tab-content">
+            <div class="card">
+              <h2><i class="bx bxs-folder"></i> Organização de Prateleiras</h2>
+              <table class="tabela-dados">
+                <thead>
+                  <tr>
+                    <th>Prateleira</th>
+                    <th>Setor</th>
+                    <th>Capacidade</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Prateleira A</td>
+                    <td>Setor D</td>
+                    <td>85% Cheio</td>
+                    <td>
+                      <span style="color: green; font-weight: bold"
+                        >Normal</span
+                      >
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Prateleira B</td>
+                    <td>Setor B</td>
+                    <td>20% Cheio</td>
+                    <td>
+                      <span style="color: orange; font-weight: bold"
+                        >Reposição Necessária</span
+                      >
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- 5. Estoque Central -->
+          <section id="sec-estoque" class="tab-content">
+            <div class="card">
+              <h2><i class="bx bxs-city"></i> Consulta de Estoque Central</h2>
+              <table class="tabela-dados">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Produto</th>
+                    <th>Qtd. Total</th>
+                    <th>Localização Principal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>8358304</td>
+                    <td>Arroz 5kg</td>
+                    <td>140 un.</td>
+                    <td>Galpão 01 - Corredor 3</td>
+                  </tr>
+                  <tr>
+                    <td>1837299</td>
+                    <td>Leite Integral 1L</td>
+                    <td>45 un.</td>
+                    <td>Galpão 02 - Corredor 1</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // Sistema de Troca de Abas
+      const linksMenu = document.querySelectorAll(".menu-link");
+      const abas = document.querySelectorAll(".tab-content");
+
+      function ativarAba(targetId) {
+        abas.forEach((aba) => aba.classList.remove("active"));
+        linksMenu.forEach((link) => link.classList.remove("active"));
+
+        const abaTarget = document.getElementById(targetId);
+        const linkTarget = document.querySelector(
+          `.menu-link[data-target="${targetId}"]`,
+        );
+
+        if (abaTarget) abaTarget.classList.add("active");
+        if (linkTarget) linkTarget.classList.add("active");
+      }
+
+      linksMenu.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          const target = link.getAttribute("data-target");
+          if (target) {
+            e.preventDefault();
+            window.location.hash = link.getAttribute("href").replace("#", "");
+            ativarAba(target);
+          }
+        });
+      });
+
+      // Carrega a aba correspondente ao hash da URL (#alertas, #relatorio, #cadastro, etc)
+      window.addEventListener("DOMContentLoaded", () => {
+        const hash = window.location.hash.replace("#", "");
+        const targetMap = {
+          alertas: "sec-alertas",
+          relatorio: "sec-relatorio",
+          cadastro: "sec-cadastro",
+          prateleiras: "sec-prateleiras",
+          estoque: "sec-estoque",
+        };
+
+        if (hash && targetMap[hash]) {
+          ativarAba(targetMap[hash]);
+        } else {
+          ativarAba("sec-alertas"); // Padroniza para abrir em Alertas
+        }
+      });
+
+      // Evento do Formulário de Cadastro
+      document
+        .getElementById("form-cadastro-exato")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          const nome = document.getElementById("nome-prod").value;
+          alert(`Produto "${nome}" cadastrado com sucesso!`);
+          e.target.reset();
+        });
+
+      // Sair
+      document.getElementById("btn-sair").addEventListener("click", () => {
+        localStorage.removeItem("valistoqueUsuario");
+        localStorage.removeItem("perfilUsuario");
+      });
+    </script>
+  </body>
+</html>

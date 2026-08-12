@@ -1,136 +1,147 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - Valistoque</title>
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-<style>
-        @import url('https://fonts.googleapis.com/css2?family=Rationale&display=swap');
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Rationale&display=swap");
 
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Rationale", sans-serif;
+      }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Rationale', sans-serif;
-        }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(to bottom, #ffffff 70%, #4682b4 100%);
+        background-attachment: fixed;
+      }
 
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(to bottom, #ffffff 70%, #4682B4 100%);
-            background-attachment: fixed;
-        }
+      .container-admin {
+        width: 420px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 30px 40px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(20px);
+      }
 
-        .container-admin {
-            width: 420px;
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 30px 40px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(20px);
-        }
+      .container-admin h1 {
+        font-size: 36px;
+        text-align: center;
+        margin-bottom: 20px;
+      }
 
-        .container-admin h1 {
-            font-size: 36px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
+      .login-box {
+        position: relative;
+        width: 100%;
+        height: 50px;
+        margin: 15px 0;
+      }
 
-        .login-box {
-            position: relative;
-            width: 100%;
-            height: 50px;
-            margin: 30px 0;
-        }
+      .login-box input,
+      .login-box select {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: 2px solid rgba(0, 0, 0, 0.2);
+        border-radius: 40px;
+        outline: none;
+        font-size: 16px;
+        color: black;
+        padding: 0 45px 0 20px;
+      }
 
-        .login-box input {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: 2px solid rgba(0, 0, 0, 0.2);
-            border-radius: 40px;
-            outline: none;
-            font-size: 16px;
-            color: black;
-            padding: 0 45px 0 20px;
-        }
+      .login-box select {
+        appearance: none;
+      }
 
-        .login-box input::placeholder {
-            color: #555;
-        }
+      .login-box input::placeholder {
+        color: #555;
+      }
 
-        .login-box i {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 20px;
-        }
-
-        .botao {
-            width: 100%;
-            height: 45px;
-            background: #5ebddc;
-            border: none;
-            outline: none;
-            border-radius: 40px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            font-size: 16px;
-            color: #333;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .botao:hover {
-            background: transparent;
-            border: 2px solid #5ebddc;
-        }
-.logo {
-            width: 700px; 
-            height: auto;
-            max-width: 90%;
-            display: block;
-            margin: 0 auto; 
-        object-fit: cover; 
-         display: block;;
-          float: left; 
-             
-    }
-     .nome{
-            font-family: Georgia, serif;
-            margin: 0; 
-            line-height: 1;
+      .login-box i {
         position: absolute;
-            top: 75%;    /* Move para o meio vertical */
-            left: 32%;   /* Move para o meio horizontal */
-            transform: translate(-50%, -50%); 
-          font-weight: bold;
-            font-size: 50px; 
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+      }
+
+      .botao {
+        width: 100%;
+        height: 45px;
+        background: #5ebddc;
+        border: none;
+        outline: none;
+        border-radius: 40px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        font-size: 16px;
+        color: #333;
+        font-weight: 600;
+        transition: 0.3s;
+      }
+
+      .botao:hover {
+        background: transparent;
+        border: 2px solid #5ebddc;
+      }
+
+      .logo {
+        width: 700px;
+        height: auto;
+        max-width: 90%;
+        display: block;
+        margin: 0 auto;
+        object-fit: cover;
+        float: left;
+        margin-top: -40px;
+        margin-right: 130px;
+      }
+
+      .nome {
+        font-family: Georgia, serif;
+        margin: 0;
+        line-height: 1;
+        position: absolute;
+        top: 75%;
+        left: 32%;
+        transform: translate(-50%, -50%);
+        font-weight: bold;
+        font-size: 50px;
         color: rgb(78, 78, 230);
-            
-        }
-    .cor-diferente {
-            color: rgb(52, 217, 52);
-        }
-    .voltar{
-         text-decoration: none;
-        color:gray;
-    }
-    .baixo{
+      }
+
+      .cor-diferente {
+        color: rgb(52, 217, 52);
+      }
+
+      .voltar {
+        text-decoration: none;
+        color: gray;
+      }
+
+      .baixo {
         font-family: "Quicksand", sans-serif;
         font-size: 12px;
         text-align: center;
-        color: #78bfd7;
+        color: black;
         margin-top: 18px;
-    }
+      }
 
-    .links-acao {
+      .links-acao {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -138,117 +149,151 @@
         margin-top: 14px;
         margin-bottom: 8px;
         flex-wrap: wrap;
-    }
+      }
 
-    .link-acao {
+      .link-acao {
         color: #2c6f91;
         text-decoration: none;
         font-size: 14px;
-    }
+        margin-top: -5px;
+      }
 
-    .link-acao:hover {
+      .link-acao:hover {
         text-decoration: underline;
-    }
+      }
 
-    .credenciais-teste {
+      .credenciais-teste {
         margin-top: 18px;
+        margin-bottom: 15px;
         padding: 12px 14px;
         border-radius: 12px;
         background: rgba(94, 189, 220, 0.12);
         color: #24576d;
         font-size: 14px;
         line-height: 1.5;
-    }
+      }
 
-    .credenciais-teste strong {
+      .credenciais-teste strong {
         color: #163847;
-    }
+      }
     </style>
-</head>
-<body>
-       <div>
-        
-        <img src="logo.png" alt="Logo do Sistema" class="logo">
-     <h1 class= "nome">Valis<span class="cor-diferente">to</span>que</h1>
+  </head>
+  <body>
+    <div>
+      <img src="logo.png" alt="Logo do Sistema" class="logo" />
+      <h1 class="nome">Valis<span class="cor-diferente">to</span>que</h1>
     </div>
     <main class="container-admin">
-        <form id="login-form">
+      <form id="login-form">
+        <h1>Login</h1>
+        <p
+          style="
+            text-align: center;
+            color: #4d6670;
+            margin-top: -8px;
+            margin-bottom: 10px;
+          "
+        >
+          Escolha o perfil e entre no protótipo.
+        </p>
 
-            <h1>Login</h1>
-            <p style="text-align:center; color:#4d6670; margin-top:-8px; margin-bottom:10px;">Escolha o perfil e entre no protótipo.</p>
-            
-            <div class="login-box">
-                <input type="email" id="email" placeholder="Email" required>
-                <i class='bx bxs-user'></i>
-            </div>
+        <div class="login-box">
+          <input type="email" id="email" placeholder="Email" required />
+          <i class="bx bxs-user"></i>
+        </div>
 
-            <div class="login-box">
-                <select id="perfil" required style="width: 100%; height: 100%; background: transparent; border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 40px; outline: none; font-size: 16px; color: black; padding: 0 45px 0 20px; appearance: none;">
-                    <option value="administrador">Administrador</option>
-                    <option value="funcionario">Funcionário</option>
-                </select>
-                <i class='bx bxs-briefcase'></i>
-            </div>
+        <div class="login-box">
+          <input type="password" id="senha" placeholder="Senha" required />
+          <i class="bx bxs-lock-alt"></i>
+        </div>
 
-            <div class="login-box">
-                <input type="password" id="senha" placeholder="Senha" required>
-                <i class='bx bxs-lock-alt'></i>
-            </div>
+        <div class="login-box">
+          <select id="perfil" required>
+            <option value="administrador">Administrador</option>
+            <option value="funcionario">Funcionário</option>
+          </select>
+          <i class="bx bxs-briefcase"></i>
+        </div>
 
-            <div class="links-acao">
-                <a href="recuperasenha.html" class="link-acao">Esqueci minha senha</a>
-                <a href="Principal.html" class="link-acao">Voltar ao início</a>
-            </div>
+        <div class="links-acao">
+          <a href="recuperasenha.html" class="link-acao">Esqueci minha senha</a>
+          <a href="Principal.html" class="link-acao">Voltar ao início</a>
+        </div>
 
-            <div class="credenciais-teste">
-                <strong>Perfis de teste:</strong><br>
-                Admin: admin@valistoque.com / admin123<br>
-                Funcionário: funcionario@valistoque.com / func123
-            </div>
+        <div class="credenciais-teste">
+          <strong>Perfis de teste:</strong><br />
+          Admin: admin@valistoque.com / admin123<br />
+          Funcionário: funcionario@valistoque.com / func123
+        </div>
 
-        
-            <button type="submit" class="botao">Entrar</button>
-         <p class="baixo">
-              &copy; 2026 Valistoque. Todos os direitos reservados.
-            </p>
-        </form>
+        <button type="submit" class="botao">Entrar</button>
+        <p class="baixo">
+          &copy; 2026 Valistoque. Todos os direitos reservados.
+        </p>
+      </form>
     </main>
 
     <script>
-        const formLogin = document.getElementById('login-form');
+      const formLogin = document.getElementById("login-form");
 
-        formLogin.addEventListener('submit', (event) => {
-            event.preventDefault();
+      formLogin.addEventListener("submit", (event) => {
+        event.preventDefault();
 
-            const email = document.getElementById('email').value.trim();
-            const senha = document.getElementById('senha').value.trim();
-            const perfil = document.getElementById('perfil').value;
+        const email = document
+          .getElementById("email")
+          .value.trim()
+          .toLowerCase();
+        const senha = document.getElementById("senha").value.trim();
+        const perfil = document.getElementById("perfil").value;
 
-            const usuarioDemo = {
-                administrador: { email: 'admin@valistoque.com', senha: 'admin123', destino: 'interiorAdm.html#relatorio', nome: 'Administrador' },
-                funcionario: { email: 'funcionario@valistoque.com', senha: 'func123', destino: 'tela_alerta.html', nome: 'Funcionário' }
-            };
+        // Mapeamento das contas e seus destinos
+        const usuarioDemo = {
+          administrador: {
+            email: "admin@valistoque.com",
+            senha: "admin123",
+            destino: "interiorAdm.html#relatorio",
+            nome: "Administrador",
+          },
+          // Trecho a ser ajustado no login.html
+          funcionario: {
+            email: "funcionario@valistoque.com",
+            senha: "func123",
+            destino: "interiorFunc.html#alertas", // <--- Mudar para carregar direto no interiorFunc com a aba de Alertas
+            nome: "Funcionário",
+          },
+        };
 
-            const demo = usuarioDemo[perfil];
-            if (!email || !senha) {
-                alert('Preencha email e senha.');
-                return;
-            }
+        if (!email || !senha) {
+          alert("Preencha email e senha.");
+          return;
+        }
 
-            const credencialValida = (email === demo.email && senha === demo.senha) || (email !== demo.email && senha.length >= 3);
-            if (!credencialValida) {
-                alert('Credenciais inválidas para o perfil selecionado.');
-                return;
-            }
+        const contaSelecionada = usuarioDemo[perfil];
 
-            localStorage.setItem('valistoqueUsuario', JSON.stringify({
-                email,
-                perfil,
-                nome: perfil === 'administrador' ? 'Administrador' : 'Funcionário'
-            }));
+        // Valida se o email e a senha correspondem exatamente ao perfil selecionado
+        if (
+          email === contaSelecionada.email &&
+          senha === contaSelecionada.senha
+        ) {
+          // Salva os dados do usuário autenticado no localStorage
+          const dadosUsuario = {
+            email: email,
+            perfil: perfil,
+            nome: contaSelecionada.nome,
+          };
 
-            window.location.href = demo.destino;
-        });
+          localStorage.setItem(
+            "valistoqueUsuario",
+            JSON.stringify(dadosUsuario),
+          );
+          localStorage.setItem("perfilUsuario", JSON.stringify(dadosUsuario));
+
+          // Redireciona para o destino (no caso do funcionário, tela_alerta.html)
+          window.location.href = contaSelecionada.destino;
+        } else {
+          alert("E-mail ou senha incorretos para o perfil selecionado.");
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

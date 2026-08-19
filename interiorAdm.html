@@ -361,6 +361,110 @@
         }
 
 
+
+
+/* Tabelas de Usuarios cadastrados que estao no Modal */
+.modalUsuarios { 
+  width: 90%; 
+  max-width: 1000px; 
+  max-height: 85vh; 
+  height: auto; 
+  border: none;      
+  padding: 0;       
+  border-radius: 6px; 
+} 
+
+.modalUsuarios {
+    width: 80%;
+    max-width: 900px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+}
+
+.modalUsuarios::backdrop {
+    background: rgba(0, 0, 0, .5);
+}
+
+.modalUsuarios-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+}
+
+.modalUsuarios-header h2{
+    margin: 0;
+    font-size: 2rem;
+    color: #0d6dad;
+}
+.container-tabelasUsuarios h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.modalUsuarios-body {
+    padding: 15px;
+}
+
+.container-tabelasUsuarios {
+    display: flex;
+    gap: 40px;
+}
+
+.container-tabelasUsuarios > div {
+    flex: 1;
+}
+
+.modalUsuarios table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modalUsuarios th,
+.modalUsuarios td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.btn-fecharModalUsuarios {
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #eee;
+    font-size: 16px;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.btn-fecharModalUsuarios:hover{
+    background-color: #6d6e6f;
+    color: white;
+}
+#botao-UsuariosCadastrados{
+    max-width: 20rem;
+    width: 100%;
+}
+
+.container-tabelasUsuarios{
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+
     </style> 
 </head> 
 <body> 
@@ -458,7 +562,8 @@
             </form> 
         </div> 
         
-        <!-- CADASTRO DE USUÁRIOS --> 
+        
+         <!-- CADASTRO DE USUÁRIOS --> 
         <div id="secao-usuario" class="secao-form">
         <h1>Cadastro de Usuário</h1>
     
@@ -496,31 +601,36 @@
             </div>
             <br>
             <br>
-            <div class="container-tabelas">
-                <h2>Administradores</h2>
-                <table id="tabela-administradores">
-                <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-                </table>
-            <br>
-            <br>            
+            <button id="botao-UsuariosCadastrados" onclick="document.getElementById('modalUsuarios').showModal()">👤 Ver Equipe</button>
+            <!--Modal para ver os usuários-->
+                <dialog id="modalUsuarios" class="modalUsuarios">
+                    <div class="modal-conteudo">
+    
+                        <div class="modalUsuarios-header">
+                            <h2>Gerenciamento de Usuários</h2>
+                            <button onclick="modalUsuarios.close()" class="btn-fecharModalUsuarios" aria-label="Fechar">&times;</button>
+                        </div>
+    
+                    <div class="modalUsuarios-body">
+                        <div class="container-tabelasUsuarios"> 
+                            <div>
+                                <form action="/buscarUsuario" method="get" class="form-busca-usuario" onsubmit="return false;"> 
+                                    <div> 
+                                        <label for="usuario">Usuários</label> 
+                                        <input type="text" id="usuarioBusca" placeholder="Buscar nome..."> 
+                                    </div> 
+            </form>
+                            </div>
+                            <div>
+                                <table id="tabela-usuario"> 
+                                    <thead> 
+                                        <tr><th>Nome</th><th>Email</th><th>Nível de Acesso</th></tr>
+                                    </thead> 
+                                <tbody></tbody> 
+                                </table> 
+                            </div>
+                </dialog>
 
-            <h2>Funcionários</h2>
-            <table id="tabela-funcionarios">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-            </table>
-            </div>
     </div>
         
         <!-- SEÇÃO DE PRATELEIRAS -->

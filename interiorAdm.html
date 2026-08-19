@@ -110,12 +110,102 @@
         .alert-list-scroll::-webkit-scrollbar-thumb { background: #232f1a; border-radius: 10px; }
 
         /*Tabela de Usuarios da parte de cadastro de usuarios*/
-        .container-tabelas {
-            display: flex;
-            gap: 50px; 
-            flex-wrap: wrap; 
-        
-        }
+      
+/*----------------------------------------------------------------------------------------------*/
+        /*Tabelas de Usuarios cadastrados que estao no Modal*/
+.modalUsuarios { 
+  width: 90%; 
+  max-width: 1000px; 
+  max-height: 85vh; 
+  height: auto; 
+  border: none;      
+  padding: 0;       
+  border-radius: 6px; 
+} 
+
+.modalUsuarios {
+    width: 80%;
+    max-width: 900px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+}
+
+.modalUsuarios::backdrop {
+    background: rgba(0, 0, 0, .5);
+}
+
+.modalUsuarios-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+}
+
+.modalUsuarios-header h2{
+    margin: 0;
+    font-size: 2rem;
+    color: #0d6dad;
+}
+.container-tabelasUsuarios h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.modalUsuarios-body {
+    padding: 15px;
+}
+
+.container-tabelasUsuarios {
+    display: flex;
+    gap: 40px;
+}
+
+.container-tabelasUsuarios > div {
+    flex: 1;
+}
+
+.modalUsuarios table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modalUsuarios th,
+.modalUsuarios td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.btn-fecharModalUsuarios {
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #eee;
+    font-size: 16px;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.btn-fecharModalUsuarios:hover{
+    background-color: #6d6e6f;
+    color: white;
+}
+#botao-UsuariosCadastrados{
+    max-width: 20rem;
+    width: 100%;
+}
+
 
 
         /*Perfil*/
@@ -478,38 +568,50 @@
             </div>
             <br>
             <br>
-            <div class="container-tabelas">
-                <h2>Administradores</h2>
-                <table id="tabela-administradores">
-                <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-                </table>
-            <br>
-            <br>            
+            <button id="botao-UsuariosCadastrados" onclick="document.getElementById('modalUsuarios').showModal()">👤 Ver Equipe</button>
+            <!--Modal para ver os usuários-->
+                <dialog id="modalUsuarios" class="modalUsuarios">
+                    <div class="modal-conteudo">
+    
+                        <div class="modalUsuarios-header">
+                            <h2>Gerenciamento de Usuários</h2>
+                            <button onclick="modalUsuarios.close()" class="btn-fecharModalUsuarios" aria-label="Fechar">&times;</button>
+                        </div>
+    
+                    <div class="modalUsuarios-body">
+                        <div class="container-tabelasUsuarios"> 
+                            <div>
+                                <h2>Administradores</h2> 
+                                <table id="tabela-administradores"> 
+                                    <thead> 
+                                        <tr><th>Nome</th><th>Email</th></tr> 
+                                    </thead> 
+                                <tbody></tbody> 
+                                </table> 
+                            </div>
 
-            <h2>Funcionários</h2>
-            <table id="tabela-funcionarios">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-            </table>
-            </div>
+                            <div>
+                                <h2>Funcionários</h2> 
+                                <table id="tabela-funcionarios"> 
+                                    <thead> 
+                                        <tr><th>Nome</th><th>Email</th></tr> 
+                                    </thead> 
+                                <tbody></tbody> 
+                                </table> 
+                                </div>
+                                </div>
+
+    
+                            </div>
+                </dialog>
+
     </div>
         
         <!-- SEÇÃO DE PRATELEIRAS -->
         <div id="secao-prateleira">
             <div class="secao-header">
                 <h1>Prateleiras</h1>
-                <button class="btn-adicionar btn-mais" title="Adicionar Prateleira">&#x2b;</button>
+                <button class="btn-adicionar btn-mais"  onclick="document.getElementById('cadastrarPrateleira').showModal()" title="Adicionar Prateleira">&#x2b;</button>
             </div>
             <form action="/buscar" method="get" class="form-busca-prateleira" onsubmit="return false;"> 
                 <div> 
@@ -1180,20 +1282,28 @@ async function atualizarFotoPerfil(event) {
 
 
     // Parte da CENTRAL DE ALERTAS
-        function salvarConfiguracoesAlertas(event) {
-            event.preventDefault();
+       function salvarConfiguracoesAlertas(event) {
+    event.preventDefault();
 
-            configuracoesAlertas = {
-                diasAntesValidade: parseInt(document.getElementById('dias-alerta-validade').value) || 30,
-                caixasMinimas: parseInt(document.getElementById('caixas-alerta-estoque').value) || 10,
-                intervaloMinutos: parseInt(document.getElementById('intervalo-alerta').value) || 15
-            };
+    // 1. Atualiza as configurações com os novos valores da tela
+    configuracoesAlertas = {
+        diasAntesValidade: parseInt(document.getElementById('dias-alerta-validade').value) || 30,
+        caixasMinimas: parseInt(document.getElementById('caixas-alerta-estoque').value) || 10,
+        intervaloMinutos: parseInt(document.getElementById('intervalo-alerta').value) || 15
+    };
 
-            localStorage.setItem('configuracoesAlertas', JSON.stringify(configuracoesAlertas));
-            processarAlertas(true);
-            iniciarMonitoramentoAlertas();
-            alert('Configurações de alerta salvas com sucesso!');
-        }
+    localStorage.setItem('configuracoesAlertas', JSON.stringify(configuracoesAlertas));
+
+    // 2. LIMPA O HISTÓRICO ANTIGO para que as regras antigas sumam da tela!
+    historicoAlertas = [];
+    localStorage.removeItem('historicoAlertas');
+
+    // 3. Processa novamente os produtos com as NOVAS regras
+    processarAlertas(true);
+    iniciarMonitoramentoAlertas();
+
+    alert('Configurações salvas e alertas recalculados com sucesso!');
+}
 
         function preencherFormularioAlertas() {
             const dias = document.getElementById('dias-alerta-validade');
